@@ -1,0 +1,13 @@
+{
+  "name": "john-belvedere-ordering-workspace",
+  "private": true,
+  "workspaces": [
+    "client"
+  ],
+  "scripts": {
+    "dev": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "preview": "npm --prefix client run preview",
+    "install:client": "npm --prefix client install"
+  }
+}
