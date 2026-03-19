@@ -7,20 +7,14 @@ function buildMockToken(user) {
   return btoa(JSON.stringify({ sub: user.id, role: user.role }))
 }
 
-function authHeaders(token) {
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
-export async function getCurrentUser(token) {
+export async function getCurrentUser() {
   try {
-    const response = await api.get('/auth/me', {
-      headers: authHeaders(token),
-    })
+    const response = await api.get('/auth/me')
     return response.data || response
   } catch (error) {
     if (!useMocks) throw error
-    const authState = storage.get('jb_auth', { user: null, token: null })
-    if (!authState?.token || authState.token !== token || !authState.user) {
+    const authState = storage.get('jb_auth', { user: null })
+    if (!authState?.user) {
       throw new Error('Invalid or expired token.')
     }
     return { user: authState.user }
@@ -45,7 +39,7 @@ export async function registerCustomer(payload) {
       ...(storage.get('jb_registered_users', [])),
       { ...user, password: payload.password },
     ])
-    return { user, token }
+    return { user }
   }
 }
 
@@ -63,7 +57,7 @@ export async function loginCustomer(payload) {
     })
     if (!user) throw new Error('Invalid customer credentials.')
     const token = buildMockToken(user)
-    return { user: { ...user, password: undefined }, token }
+    return { user: { ...user, password: undefined } }
   }
 }
 
@@ -88,6 +82,14 @@ export async function loginAdmin(payload) {
       phone,
       role: 'admin',
     }
-    return { user, token: buildMockToken(user) }
+    return { user }
+  }
+}
+
+export async function logoutUser() {
+  try {
+    await api.post('/auth/logout', {})
+  } catch (error) {
+    if (!useMocks) throw error
   }
 }

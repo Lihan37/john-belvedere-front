@@ -24,6 +24,7 @@ function Login() {
   const [loginData, setLoginData] = useState(initialLogin)
   const [error, setError] = useState('')
   const [accountExistsModal, setAccountExistsModal] = useState(false)
+  const [accountMissingWarning, setAccountMissingWarning] = useState(false)
 
   const redirectTo = location.state?.from?.pathname || '/menu'
 
@@ -31,6 +32,7 @@ function Login() {
     event.preventDefault()
     setError('')
     setAccountExistsModal(false)
+    setAccountMissingWarning(false)
 
     try {
       if (mode === 'register') {
@@ -48,32 +50,34 @@ function Login() {
         setAccountExistsModal(true)
         return
       }
+      if (err.code === 'ACCOUNT_NOT_FOUND') {
+        setAccountMissingWarning(true)
+        setMode('register')
+        return
+      }
       setError(err.message)
     }
   }
 
   return (
     <AppShell>
-      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="mx-auto max-w-2xl">
         <section className="glass-panel rounded-[32px] p-6 sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-            Customer Access
-          </p>
-          <h1 className="mt-4 font-display text-4xl leading-tight sm:text-5xl">
-            Sign in fast or create an account for future orders.
-          </h1>
-          <p className="mt-4 text-sm leading-6 text-muted">
-            Guests can browse and order too. Customer auth is optional and designed for order history expansion later.
-          </p>
-          <div className="mt-6 rounded-[24px] border border-border bg-surface-strong p-5">
-            <p className="font-semibold">Also looking for staff access?</p>
-            <Link to="/admin/login" className="mt-3 inline-flex text-sm font-semibold text-primary">
-              Open admin login
+          <div className="mb-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+              Customer Access
+            </p>
+            <h1 className="mt-4 font-display text-4xl leading-tight sm:text-5xl">
+              Sign up first if you are new
+            </h1>
+            <p className="mt-4 text-sm leading-6 text-muted">
+              Already registered? Login and continue. If you do not have an account yet, create one first before trying to sign in.
+            </p>
+            <Link to="/admin/login" className="mt-4 inline-flex text-sm font-semibold text-primary">
+              Admin login
             </Link>
           </div>
-        </section>
 
-        <section className="glass-panel rounded-[32px] p-6 sm:p-8">
           <div className="inline-flex rounded-full border border-border p-1">
             {['login', 'register'].map((tab) => (
               <button
@@ -90,6 +94,11 @@ function Login() {
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            {accountMissingWarning ? (
+              <div className="rounded-[22px] border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                No account found with that email or phone. Please sign up first.
+              </div>
+            ) : null}
             {mode === 'register' ? (
               <>
                 <Field

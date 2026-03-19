@@ -14,9 +14,7 @@ function getMockOrders() {
 
 export async function createOrder(payload, token) {
   try {
-    const response = await api.post('/orders', payload, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
+    const response = await api.post('/orders', payload)
     return response.data || response
   } catch (error) {
     if (!useMocks) throw error
@@ -34,9 +32,7 @@ export async function createOrder(payload, token) {
 
 export async function fetchOrders(token) {
   try {
-    const response = await api.get('/orders', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
+    const response = await api.get('/orders')
     return response.data || response
   } catch (error) {
     if (useMocks) return getMockOrders()
@@ -44,15 +40,21 @@ export async function fetchOrders(token) {
   }
 }
 
+export async function fetchMyOrders() {
+  try {
+    const response = await api.get('/orders/my')
+    return response.data || response
+  } catch (error) {
+    if (useMocks) {
+      return getMockOrders()
+    }
+    throw error
+  }
+}
+
 export async function updateOrderStatus(orderId, status, token) {
   try {
-    const response = await api.put(
-      `/orders/${orderId}/status`,
-      { status },
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    )
+    const response = await api.put(`/orders/${orderId}/status`, { status })
     return response.data || response
   } catch (error) {
     if (!useMocks) throw error

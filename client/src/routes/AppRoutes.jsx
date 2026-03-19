@@ -5,6 +5,7 @@ import Login from '../pages/Login'
 import Success from '../pages/Success'
 import AdminLogin from '../pages/AdminLogin'
 import AdminDashboard from '../pages/AdminDashboard'
+import CustomerDashboard from '../pages/CustomerDashboard'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 
 function AppRoutes() {
@@ -14,6 +15,14 @@ function AppRoutes() {
       <Route path="/menu" element={<Menu />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/login" element={<Login />} />
+      <Route
+        path="/account"
+        element={
+          <ProtectedRoute>
+            <CustomerDashboard />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/success" element={<Success />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route

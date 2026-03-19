@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, CreditCard, HandCoins, ShieldCheck } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import CartItemRow from '../components/cart/CartItemRow'
@@ -13,8 +13,9 @@ function Cart() {
   const navigate = useNavigate()
   const location = useLocation()
   const { items, total, updateQuantity, removeFromCart, clearCart } = useCart()
-  const { token, user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [tableNumber, setTableNumber] = useState('T12')
+  const [paymentMethod, setPaymentMethod] = useState('counter')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -33,6 +34,7 @@ function Cart() {
       const order = await createOrder(
         {
           tableNumber,
+          paymentMethod,
           items: items.map(({ _id, name, price, quantity }) => ({
             menuItemId: _id,
             name,
@@ -42,7 +44,6 @@ function Cart() {
           totalPrice: total,
           customerId: user?.id,
         },
-        token,
       )
       clearCart()
       navigate('/success', {
@@ -114,6 +115,63 @@ function Cart() {
             />
           </div>
 
+          <div className="mt-5 rounded-[24px] border border-border bg-surface-strong p-5">
+            <p className="text-sm font-semibold">Payment method</p>
+            <div className="mt-4 grid gap-3">
+              {[
+                {
+                  id: 'counter',
+                  label: 'Cash at counter',
+                  description: 'Pay in person at the restaurant counter.',
+                  icon: HandCoins,
+                  available: true,
+                },
+                {
+                  id: 'stripe',
+                  label: 'Stripe',
+                  description: 'Keep this selected for future online card checkout.',
+                  icon: CreditCard,
+                  available: false,
+                },
+              ].map(({ id, label, description, icon: Icon, available }) => {
+                const active = paymentMethod === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setPaymentMethod(id)}
+                    className={`rounded-[22px] border p-4 text-left transition ${
+                      active
+                        ? 'border-primary bg-primary/8'
+                        : 'border-border hover:bg-surface'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className={`rounded-2xl p-2 ${active ? 'bg-primary text-white' : 'bg-surface text-text'}`}>
+                          <Icon size={18} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">{label}</p>
+                          <p className="mt-1 text-xs leading-5 text-muted">{description}</p>
+                        </div>
+                      </div>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                          available
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+                            : 'bg-amber-500/15 text-amber-600 dark:text-amber-300'
+                        }`}
+                      >
+                        {available ? 'Active' : 'Soon'}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div className="mt-5 space-y-3 rounded-[24px] border border-border bg-surface-strong p-5">
             <div className="flex items-center justify-between text-sm text-muted">
               <span>Subtotal</span>
@@ -121,7 +179,7 @@ function Cart() {
             </div>
             <div className="flex items-center justify-between text-sm text-muted">
               <span>Payment</span>
-              <span>Pay later</span>
+              <span>{paymentMethod === 'counter' ? 'Counter' : 'Stripe later'}</span>
             </div>
             <div className="flex items-center justify-between border-t border-border pt-3 font-semibold">
               <span>Total</span>
@@ -136,7 +194,9 @@ function Cart() {
             </div>
             <p className="mt-2">
               {isAuthenticated
-                ? 'Ordering is ready. Payment integration will be added later.'
+                ? paymentMethod === 'counter'
+                  ? 'Counter payment is active now. Stripe selection is stored for future integration.'
+                  : 'Stripe is marked for future integration. Orders are still stored as unpaid until gateway setup is added.'
                 : 'Login is required before checkout. You can still review your cart first.'}
             </p>
           </div>

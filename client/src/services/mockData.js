@@ -61,6 +61,7 @@ export const mockOrders = [
     tableNumber: 'T12',
     totalPrice: 1160,
     status: 'pending',
+    paymentMethod: 'counter',
     paymentStatus: 'unpaid',
     createdAt: new Date().toISOString(),
     items: [
@@ -74,6 +75,7 @@ export const mockOrders = [
     tableNumber: 'T04',
     totalPrice: 620,
     status: 'preparing',
+    paymentMethod: 'stripe',
     paymentStatus: 'unpaid',
     createdAt: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
     items: [{ name: 'Truffle Alfredo Pasta', quantity: 1, price: 620 }],

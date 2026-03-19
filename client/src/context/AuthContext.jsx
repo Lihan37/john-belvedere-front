@@ -3,6 +3,7 @@ import {
   getCurrentUser,
   loginAdmin,
   loginCustomer,
+  logoutUser,
   registerCustomer,
 } from '../services/authService'
 import { storage } from '../utils/helpers'
@@ -14,7 +15,6 @@ export function AuthProvider({ children }) {
   const [auth, setAuth] = useState(() =>
     storage.get(storageKey, {
       user: null,
-      token: null,
     }),
   )
   const [loading, setLoading] = useState(false)
@@ -28,21 +28,13 @@ export function AuthProvider({ children }) {
     let active = true
 
     async function hydrateAuth() {
-      if (!auth?.token) {
-        if (active) setAuthReady(true)
-        return
-      }
-
       try {
-        const response = await getCurrentUser(auth.token)
+        const response = await getCurrentUser()
         if (!active) return
-        setAuth((current) => ({
-          ...current,
-          user: response.user,
-        }))
+        setAuth({ user: response.user })
       } catch {
         if (!active) return
-        setAuth({ user: null, token: null })
+        setAuth({ user: null })
       } finally {
         if (active) setAuthReady(true)
       }
@@ -88,13 +80,16 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const logout = () => setAuth({ user: null, token: null })
+  const logout = async () => {
+    await logoutUser()
+    setAuth({ user: null })
+  }
 
   return (
     <AuthContext.Provider
       value={{
         ...auth,
-        isAuthenticated: Boolean(auth.token),
+        isAuthenticated: Boolean(auth.user),
         isAdmin: auth.user?.role === 'admin',
         authReady,
         loading,
