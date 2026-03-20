@@ -6,6 +6,7 @@ import SectionHeading from '../components/common/SectionHeading'
 import CartItemRow from '../components/cart/CartItemRow'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { createOrder } from '../services/orderService'
 import { currency } from '../utils/helpers'
 
@@ -14,7 +15,7 @@ function Cart() {
   const location = useLocation()
   const { items, total, updateQuantity, removeFromCart, clearCart } = useCart()
   const { user, isAuthenticated } = useAuth()
-  const [tableNumber, setTableNumber] = useState('T12')
+  const { showToast } = useToast()
   const [paymentMethod, setPaymentMethod] = useState('counter')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -33,7 +34,6 @@ function Cart() {
       setError('')
       const order = await createOrder(
         {
-          tableNumber,
           paymentMethod,
           items: items.map(({ _id, name, price, quantity }) => ({
             menuItemId: _id,
@@ -46,10 +46,14 @@ function Cart() {
         },
       )
       clearCart()
+      showToast({
+        tone: 'success',
+        title: 'Order placed',
+        message: 'Your order has been sent to the kitchen.',
+      })
       navigate('/success', {
         state: {
           orderId: order._id,
-          tableNumber,
         },
       })
     } catch (err) {
@@ -102,20 +106,6 @@ function Cart() {
             Order Summary
           </p>
           <div className="mt-4 rounded-[24px] border border-border bg-surface-strong p-5">
-            <label className="text-sm font-semibold" htmlFor="tableNumber">
-              Table number
-            </label>
-            <input
-              id="tableNumber"
-              type="text"
-              value={tableNumber}
-              onChange={(event) => setTableNumber(event.target.value)}
-              className="mt-3 w-full rounded-2xl border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
-              placeholder="Enter table number"
-            />
-          </div>
-
-          <div className="mt-5 rounded-[24px] border border-border bg-surface-strong p-5">
             <p className="text-sm font-semibold">Payment method</p>
             <div className="mt-4 grid gap-3">
               {[
@@ -148,7 +138,7 @@ function Cart() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
-                        <div className={`rounded-2xl p-2 ${active ? 'bg-primary text-white' : 'bg-surface text-text'}`}>
+                        <div className={`rounded-2xl p-2 ${active ? 'bg-primary text-bg-strong' : 'bg-surface text-text'}`}>
                           <Icon size={18} />
                         </div>
                         <div>
@@ -207,7 +197,7 @@ function Cart() {
             type="button"
             onClick={handleCheckout}
             disabled={!items.length || submitting}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-4 text-sm font-semibold text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-4 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Placing order...' : isAuthenticated ? 'Checkout' : 'Login to checkout'}
           </button>

@@ -58,7 +58,6 @@ export const mockMenu = [
 export const mockOrders = [
   {
     _id: 'o1',
-    tableNumber: 'T12',
     totalPrice: 1160,
     status: 'pending',
     paymentMethod: 'counter',
@@ -72,7 +71,6 @@ export const mockOrders = [
   },
   {
     _id: 'o2',
-    tableNumber: 'T04',
     totalPrice: 620,
     status: 'preparing',
     paymentMethod: 'stripe',

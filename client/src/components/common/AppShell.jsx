@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 
 function AppShell({ children }) {
+  const location = useLocation()
   const { itemCount } = useCart()
   const { isAdmin, isAuthenticated, logout, user } = useAuth()
   const [theme, setTheme] = useState(() => localStorage.getItem('jb_theme') || 'light')
@@ -15,6 +16,8 @@ function AppShell({ children }) {
     document.documentElement.classList.toggle('dark', theme === 'dark')
     localStorage.setItem('jb_theme', theme)
   }, [theme])
+
+  const showBottomCartButton = !isAdmin
 
   const customerAccountAction = !isAdmin && isAuthenticated ? (
     <NavLink
@@ -35,7 +38,7 @@ function AppShell({ children }) {
         className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-surface-strong"
       >
         <User size={16} />
-        <span>{user?.name || 'Customer'}</span>
+        <span>Log out</span>
         <LogOut size={16} />
       </button>
     ) : (
@@ -63,11 +66,15 @@ function AppShell({ children }) {
     <NavLink
       to="/cart"
       onClick={() => setMobileMenuOpen(false)}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-strong"
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-[#fff8ef] transition hover:bg-primary-strong"
+      style={{ color: 'var(--bg-strong)' }}
     >
-      <ShoppingBag size={16} />
-      Cart
-      <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
+      <ShoppingBag size={16} color="currentColor" />
+      <span style={{ color: 'var(--bg-strong)' }}>Cart</span>
+      <span
+        className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-[#fff8ef]"
+        style={{ color: 'var(--bg-strong)' }}
+      >
         {itemCount}
       </span>
     </NavLink>
@@ -125,8 +132,27 @@ function AppShell({ children }) {
             </div>
           </div>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className={`flex-1 ${showBottomCartButton ? 'pb-24' : ''}`}>{children}</main>
       </div>
+
+      {showBottomCartButton ? (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-40">
+          <NavLink
+            to="/cart"
+            className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-primary px-5 py-4 text-sm font-semibold text-[#fff8ef] shadow-soft transition hover:bg-primary-strong"
+            style={{ color: 'var(--bg-strong)' }}
+          >
+            <ShoppingBag size={18} color="currentColor" />
+            <span style={{ color: 'var(--bg-strong)' }}>Cart</span>
+            <span
+              className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-[#fff8ef]"
+              style={{ color: 'var(--bg-strong)' }}
+            >
+              {itemCount}
+            </span>
+          </NavLink>
+        </div>
+      ) : null}
     </div>
   )
 }

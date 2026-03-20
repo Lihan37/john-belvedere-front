@@ -1,51 +1,83 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowRight, Clock3, CreditCard, ReceiptText, UserRound } from 'lucide-react'
+import { ArrowRight, Clock3, CreditCard, LoaderCircle, ReceiptText, UserRound } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import { useAuth } from '../context/AuthContext'
 import { fetchMyOrders } from '../services/orderService'
+import { useToast } from '../context/ToastContext'
 import { currency, formatOrderTime } from '../utils/helpers'
+
+const POLLING_INTERVAL_MS = 12000
 
 function CustomerDashboard() {
   const { user, isAdmin, logout } = useAuth()
+  const { showToast } = useToast()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
 
-    async function loadOrders() {
+    async function loadOrders({ silent = false } = {}) {
       try {
-        setLoading(true)
+        if (silent) {
+          setRefreshing(true)
+        } else {
+          setLoading(true)
+        }
         setError('')
         const response = await fetchMyOrders()
         if (!active) return
         setOrders(response)
+        setLastUpdated(new Date())
       } catch (err) {
         if (!active) return
         setError(err.message)
+        if (silent) {
+          showToast({
+            tone: 'error',
+            title: 'Live tracking paused',
+            message: err.message,
+          })
+        }
       } finally {
-        if (active) setLoading(false)
+        if (active) {
+          if (silent) {
+            setRefreshing(false)
+          } else {
+            setLoading(false)
+          }
+        }
       }
     }
 
     loadOrders()
+    const intervalId = window.setInterval(() => {
+      if (!active) return
+      loadOrders({ silent: true })
+    }, POLLING_INTERVAL_MS)
+
     return () => {
       active = false
+      window.clearInterval(intervalId)
     }
-  }, [])
+  }, [showToast])
 
   const metrics = useMemo(() => {
     const totalSpent = orders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0)
     const activeOrders = orders.filter((order) => ['pending', 'preparing'].includes(order.status)).length
     return {
-      totalOrders: orders.length,
       activeOrders,
+      totalOrders: orders.length,
       totalSpent,
     }
   }, [orders])
+
+  const activeOrders = orders.filter((order) => ['pending', 'preparing'].includes(order.status))
 
   if (isAdmin) {
     return <Navigate to="/admin/dashboard" replace />
@@ -57,11 +89,26 @@ function CustomerDashboard() {
         <div className="glass-panel rounded-[32px] p-6 sm:p-8">
           <SectionHeading
             eyebrow="Customer Dashboard"
-            title="Your orders, account, and dine-in activity."
-            description="Track your recent orders, active table requests, and preferred payment path from one place."
+            title="Menu and orders, nothing extra."
+            description="Quick access to active orders and your recent purchases."
           />
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-muted">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5">
+              <UserRound size={15} className="text-primary" />
+              {user?.name || 'Customer'}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5">
+              {refreshing ? <LoaderCircle size={15} className="animate-spin" /> : <Clock3 size={15} />}
+              {refreshing
+                ? 'Refreshing...'
+                : lastUpdated
+                  ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Waiting for sync'}
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {[
               ['Orders placed', metrics.totalOrders, ReceiptText],
               ['Active orders', metrics.activeOrders, Clock3],
@@ -120,9 +167,49 @@ function CustomerDashboard() {
 
       <section className="mt-8">
         <SectionHeading
+          eyebrow="Live Orders"
+          title="Orders currently moving through the kitchen"
+          description="Pending and preparing orders refresh automatically so you can follow active requests."
+        />
+
+        <div className="mt-6 space-y-4">
+          {activeOrders.length ? (
+            activeOrders.map((order) => (
+              <article key={`active-${order._id}`} className="glass-panel rounded-[28px] p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                      Active order
+                    </p>
+                    <h3 className="mt-2 font-display text-2xl">Order #{String(order._id).slice(0, 6)}</h3>
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase text-primary">
+                    {order.status}
+                  </span>
+                </div>
+                <p className="mt-4 text-sm text-muted">
+                  {order.status === 'pending'
+                    ? 'Your order is waiting in the kitchen queue.'
+                    : 'Your order is being prepared right now.'}
+                </p>
+              </article>
+            ))
+          ) : (
+            <div className="glass-panel rounded-[28px] p-8 text-center">
+              <h2 className="font-display text-3xl">No active orders right now</h2>
+              <p className="mt-3 text-sm text-muted">
+                As soon as you place an order, live kitchen status will appear here.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <SectionHeading
           eyebrow="Order History"
-          title="Recent table orders"
-          description="Your latest dine-in orders, payment method choice, and live kitchen status."
+          title="Recent orders"
+          description="Your latest orders, payment method choice, and kitchen status."
         />
 
         {error ? <p className="mt-5 text-sm text-red-500">{error}</p> : null}
@@ -145,7 +232,7 @@ function CustomerDashboard() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-                      Table {order.tableNumber}
+                      Previous order
                     </p>
                     <h3 className="mt-2 font-display text-2xl">Order #{String(order._id).slice(0, 6)}</h3>
                     <p className="mt-2 text-sm text-muted">{formatOrderTime(order.createdAt)}</p>

@@ -5,7 +5,6 @@ import AppShell from '../components/common/AppShell'
 function Success() {
   const location = useLocation()
   const orderId = location.state?.orderId
-  const tableNumber = location.state?.tableNumber
 
   return (
     <AppShell>
@@ -23,18 +22,12 @@ function Success() {
         {orderId ? (
           <div className="mt-6 rounded-[24px] border border-border bg-surface-strong px-5 py-4 text-sm text-muted">
             Order ID: <span className="font-semibold text-text">{orderId}</span>
-            {tableNumber ? (
-              <>
-                {' '}
-                | Table: <span className="font-semibold text-text">{tableNumber}</span>
-              </>
-            ) : null}
           </div>
         ) : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             to="/menu"
-            className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-strong"
+            className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong"
           >
             Back to menu
           </Link>

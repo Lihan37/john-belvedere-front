@@ -1,0 +1,469 @@
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
+import { ImagePlus, Pencil, Plus, RefreshCw, Save, Trash2, Upload, X } from 'lucide-react'
+import AppShell from '../components/common/AppShell'
+import SectionHeading from '../components/common/SectionHeading'
+import {
+  createAdminMenuItem,
+  deleteAdminMenuItem,
+  fetchAdminMenuItems,
+  updateAdminMenuItem,
+} from '../services/adminMenuService'
+import { uploadMenuImage } from '../services/cloudinaryUploadService'
+import { currency } from '../utils/helpers'
+import { useToast } from '../context/ToastContext'
+
+const initialForm = {
+  name: '',
+  category: '',
+  price: '',
+  description: '',
+  image: '',
+}
+
+function AdminMenuManager() {
+  const { showToast } = useToast()
+  const [menuItems, setMenuItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [deletingId, setDeletingId] = useState('')
+  const [editingId, setEditingId] = useState('')
+  const [form, setForm] = useState(initialForm)
+  const [error, setError] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [confirmDeleteItem, setConfirmDeleteItem] = useState(null)
+
+  const loadMenu = async ({ silent = false } = {}) => {
+    try {
+      if (silent) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
+      setError('')
+      const items = await fetchAdminMenuItems()
+      setMenuItems(items)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      if (silent) {
+        setRefreshing(false)
+      } else {
+        setLoading(false)
+      }
+    }
+  }
+
+  useEffect(() => {
+    loadMenu()
+  }, [])
+
+  const categories = useMemo(
+    () => Array.from(new Set(menuItems.map((item) => item.category))).sort((left, right) => left.localeCompare(right)),
+    [menuItems],
+  )
+
+  const groupedItems = useMemo(
+    () =>
+      categories.map((category) => ({
+        category,
+        items: menuItems.filter((item) => item.category === category),
+      })),
+    [categories, menuItems],
+  )
+
+  const handleChange = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const handleEdit = (item) => {
+    setEditingId(item._id)
+    setForm({
+      name: item.name || '',
+      category: item.category || '',
+      price: String(item.price ?? ''),
+      description: item.description || '',
+      image: item.image || '',
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const resetForm = () => {
+    setEditingId('')
+    setForm(initialForm)
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    try {
+      setSubmitting(true)
+      setError('')
+      const payload = {
+        name: form.name.trim(),
+        category: form.category.trim(),
+        price: Number(form.price),
+        description: form.description.trim(),
+        image: form.image.trim(),
+      }
+
+      if (editingId) {
+        const updated = await updateAdminMenuItem(editingId, payload)
+        setMenuItems((current) => current.map((item) => (item._id === editingId ? updated : item)))
+        showToast({
+          tone: 'success',
+          title: 'Menu item updated',
+          message: `${updated.name} was updated successfully.`,
+        })
+      } else {
+        const created = await createAdminMenuItem(payload)
+        setMenuItems((current) => [created, ...current])
+        showToast({
+          tone: 'success',
+          title: 'Menu item added',
+          message: `${created.name} was added to the menu.`,
+        })
+      }
+
+      resetForm()
+    } catch (err) {
+      setError(err.message)
+      showToast({
+        tone: 'error',
+        title: 'Menu save failed',
+        message: err.message,
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (item) => {
+    try {
+      setDeletingId(item._id)
+      setError('')
+      await deleteAdminMenuItem(item._id)
+      setMenuItems((current) => current.filter((entry) => entry._id !== item._id))
+      if (editingId === item._id) {
+        resetForm()
+      }
+      showToast({
+        tone: 'success',
+        title: 'Menu item deleted',
+        message: `${item.name} was removed from the menu.`,
+      })
+    } catch (err) {
+      setError(err.message)
+      showToast({
+        tone: 'error',
+        title: 'Delete failed',
+        message: err.message,
+      })
+    } finally {
+      setDeletingId('')
+      setConfirmDeleteItem(null)
+    }
+  }
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+      setError('')
+      const imageUrl = await uploadMenuImage(file)
+      setForm((current) => ({ ...current, image: imageUrl }))
+      showToast({
+        tone: 'success',
+        title: 'Image uploaded',
+        message: 'Cloudinary image uploaded successfully.',
+      })
+    } catch (err) {
+      setError(err.message)
+      showToast({
+        tone: 'error',
+        title: 'Upload failed',
+        message: err.message,
+      })
+    } finally {
+      setUploadingImage(false)
+      event.target.value = ''
+    }
+  }
+
+  return (
+    <AppShell>
+      <section className="flex flex-wrap items-start justify-between gap-4">
+        <SectionHeading
+          eyebrow="Admin Menu"
+          title="Manage food items and categories"
+          description="Add new menu items, edit details later, and remove anything that should no longer appear to customers."
+        />
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/admin/dashboard"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+          >
+            Back to dashboard
+          </Link>
+          <button
+            type="button"
+            onClick={() => loadMenu({ silent: true })}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+            Refresh menu
+          </button>
+        </div>
+      </section>
+
+      {error ? <p className="mt-6 text-sm text-red-500">{error}</p> : null}
+
+      <section className="mt-6">
+        <div className="glass-panel rounded-[30px] p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                {editingId ? 'Edit Item' : 'New Item'}
+              </p>
+              <h2 className="mt-3 font-display text-3xl">
+                {editingId ? 'Update menu item' : 'Add a new menu item'}
+              </h2>
+            </div>
+            {editingId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border transition hover:bg-surface-strong"
+                aria-label="Cancel edit"
+              >
+                <X size={18} />
+              </button>
+            ) : null}
+          </div>
+
+          <form className="mt-6 grid gap-4 lg:grid-cols-2" onSubmit={handleSubmit}>
+            <Field label="Food name" value={form.name} onChange={(value) => handleChange('name', value)} />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+              <Field label="Category" value={form.category} onChange={(value) => handleChange('category', value)} listId="menu-category-options" />
+              <Field
+                label="Price (AUD)"
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.price}
+                onChange={(value) => handleChange('price', value)}
+              />
+            </div>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Description</span>
+              <textarea
+                value={form.description}
+                onChange={(event) => handleChange('description', event.target.value)}
+                rows={4}
+                className="w-full rounded-[22px] border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
+                required
+              />
+            </label>
+            <Field
+              label="Image URL"
+              type="url"
+              required={false}
+              value={form.image}
+              onChange={(value) => handleChange('image', value)}
+              placeholder="Optional for now. You can add it later."
+            />
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Upload image</span>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[22px] border border-dashed border-border bg-surface-strong px-4 py-4 text-sm font-semibold transition hover:bg-bg-strong">
+                {uploadingImage ? <RefreshCw size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+                {uploadingImage ? 'Uploading to Cloudinary...' : 'Choose file and upload'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+              </label>
+            </label>
+
+            {form.image ? (
+              <div className="rounded-[22px] border border-border bg-surface-strong p-3">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-secondary">
+                  Uploaded image
+                </p>
+                <img
+                  src={form.image}
+                  alt="Menu preview"
+                  className="h-48 w-full rounded-[18px] object-cover"
+                />
+              </div>
+            ) : null}
+
+            <datalist id="menu-category-options">
+              {categories.map((category) => (
+                <option key={category} value={category} />
+              ))}
+            </datalist>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-primary px-5 py-4 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60 lg:col-span-2"
+            >
+              {editingId ? <Save size={16} /> : <Plus size={16} />}
+              {submitting ? 'Saving...' : editingId ? 'Update item' : 'Add item'}
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-6 glass-panel rounded-[30px] p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                Full Menu
+              </p>
+              <h2 className="mt-3 font-display text-3xl">All menu items</h2>
+            </div>
+            <span className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted">
+              {menuItems.length} items
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="mt-6 space-y-4">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="h-28 animate-pulse rounded-[24px] bg-surface-strong" />
+              ))}
+            </div>
+          ) : !groupedItems.length ? (
+            <div className="mt-6 rounded-[24px] border border-border bg-surface-strong p-6 text-center">
+              <h3 className="font-display text-2xl">No menu items yet</h3>
+              <p className="mt-3 text-sm text-muted">Create your first item from the form.</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-5">
+              {groupedItems.map(({ category, items }) => (
+                <div key={category}>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                    {category}
+                  </p>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {items.map((item) => (
+                      <article
+                        key={item._id}
+                        className="flex h-full flex-col rounded-[24px] border border-border bg-surface-strong p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="font-display text-2xl leading-tight">{item.name}</h3>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+                            {currency(item.price)}
+                          </span>
+                        </div>
+                        <p className="mt-3 flex-1 text-sm leading-6 text-muted">{item.description}</p>
+                        <p className="mt-3 line-clamp-2 text-xs text-muted">
+                          {item.image ? item.image : 'No image added yet'}
+                        </p>
+                        <div className="mt-4 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(item)}
+                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-surface"
+                            >
+                              <Pencil size={15} />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteItem(item)}
+                              disabled={deletingId === item._id}
+                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-text px-4 py-2.5 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <Trash2 size={15} />
+                              {deletingId === item._id ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {confirmDeleteItem
+        ? createPortal(
+            <div className="fixed inset-0 z-[100] bg-black/45">
+              <div className="flex min-h-screen items-start justify-center px-4 pb-6 pt-24 sm:items-center sm:pt-6">
+                <div className="glass-panel w-full max-w-md rounded-[28px] p-6 shadow-soft">
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                    Confirm Delete
+                  </p>
+                  <h2 className="mt-4 font-display text-3xl">Remove this menu item?</h2>
+                  <p className="mt-3 text-sm leading-6 text-muted">
+                    "{confirmDeleteItem.name}" will be removed from the menu list. You can sync it back later, but this action will remove it now.
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteItem(null)}
+                      className="inline-flex flex-1 items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(confirmDeleteItem)}
+                      disabled={deletingId === confirmDeleteItem._id}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-text px-5 py-3 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deletingId === confirmDeleteItem._id ? <RefreshCw size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      {deletingId === confirmDeleteItem._id ? 'Deleting...' : 'Delete item'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </AppShell>
+  )
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required = true,
+  placeholder = '',
+  listId,
+  ...rest
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        required={required}
+        placeholder={placeholder}
+        list={listId}
+        className="w-full rounded-[22px] border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
+        {...rest}
+      />
+    </label>
+  )
+}
+
+export default AdminMenuManager

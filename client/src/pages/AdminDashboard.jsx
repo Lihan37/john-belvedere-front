@@ -1,20 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LoaderCircle, LogOut, RefreshCw } from 'lucide-react'
+import { LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import OrderCard from '../components/admin/OrderCard'
 import { fetchOrders, updateOrderStatus } from '../services/orderService'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 
 const POLLING_INTERVAL_MS = 15000
 
 function AdminDashboard() {
   const { logout } = useAuth()
+  const { showToast } = useToast()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [paymentFilter, setPaymentFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('newest')
 
   const loadOrders = async ({ silent = false } = {}) => {
     try {
@@ -29,6 +36,13 @@ function AdminDashboard() {
       setLastUpdated(new Date())
     } catch (err) {
       setError(err.message)
+      if (silent) {
+        showToast({
+          tone: 'error',
+          title: 'Auto refresh failed',
+          message: err.message,
+        })
+      }
     } finally {
       if (silent) {
         setRefreshing(false)
@@ -61,7 +75,7 @@ function AdminDashboard() {
       window.clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [showToast])
 
   const metrics = useMemo(
     () => ({
@@ -82,10 +96,47 @@ function AdminDashboard() {
         current.map((order) => (order._id === orderId ? { ...order, ...updated } : order)),
       )
       setLastUpdated(new Date())
+      showToast({
+        tone: 'success',
+        title: 'Order updated',
+        message: `Status changed to ${status}.`,
+      })
     } catch (err) {
       setError(err.message)
+      showToast({
+        tone: 'error',
+        title: 'Status update failed',
+        message: err.message,
+      })
     }
   }
+
+  const visibleOrders = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase()
+
+    return [...orders]
+      .filter((order) => {
+        if (statusFilter !== 'all' && order.status !== statusFilter) return false
+        const paymentMethod = order.paymentMethod || 'counter'
+        if (paymentFilter !== 'all' && paymentMethod !== paymentFilter) return false
+        if (!normalizedSearch) return true
+
+        const haystack = [
+          String(order._id).slice(0, 6),
+          paymentMethod,
+          ...(order.items || []).map((item) => item.name),
+        ]
+          .join(' ')
+          .toLowerCase()
+
+        return haystack.includes(normalizedSearch)
+      })
+      .sort((left, right) => {
+        if (sortBy === 'oldest') return new Date(left.createdAt) - new Date(right.createdAt)
+        if (sortBy === 'amount') return Number(right.totalPrice) - Number(left.totalPrice)
+        return new Date(right.createdAt) - new Date(left.createdAt)
+      })
+  }, [orders, paymentFilter, search, sortBy, statusFilter])
 
   return (
     <AppShell>
@@ -96,6 +147,20 @@ function AdminDashboard() {
           description="Monitor table activity, track order status, and prepare for future real-time event updates."
         />
         <div className="flex gap-2">
+          <Link
+            to="/admin/menu"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+          >
+            <UtensilsCrossed size={16} />
+            Manage menu
+          </Link>
+          <Link
+            to="/admin/users"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+          >
+            <Users size={16} />
+            Users
+          </Link>
           <div className="hidden items-center gap-2 rounded-full border border-border px-4 py-3 text-sm text-muted sm:inline-flex">
             {refreshing ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             {refreshing
@@ -141,6 +206,43 @@ function AdminDashboard() {
 
       {error ? <p className="mt-6 text-sm text-red-500">{error}</p> : null}
 
+      <section className="mt-6 grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search order ID, item name..."
+          className="rounded-[20px] border border-border bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary"
+        />
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          className="rounded-[20px] border border-border bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary"
+        >
+          <option value="all">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="preparing">Preparing</option>
+          <option value="served">Served</option>
+        </select>
+        <select
+          value={paymentFilter}
+          onChange={(event) => setPaymentFilter(event.target.value)}
+          className="rounded-[20px] border border-border bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary"
+        >
+          <option value="all">All payments</option>
+          <option value="counter">Counter</option>
+          <option value="stripe">Stripe later</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(event) => setSortBy(event.target.value)}
+          className="rounded-[20px] border border-border bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary"
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="amount">Highest amount</option>
+        </select>
+      </section>
+
       <section className="mt-8">
         {loading ? (
           <div className="grid gap-4 xl:grid-cols-2">
@@ -148,16 +250,16 @@ function AdminDashboard() {
               <div key={index} className="glass-panel h-64 animate-pulse rounded-[28px] bg-surface-strong" />
             ))}
           </div>
-        ) : !orders.length ? (
+        ) : !visibleOrders.length ? (
           <div className="glass-panel rounded-[28px] p-8 text-center">
-            <h2 className="font-display text-3xl">No orders yet</h2>
+            <h2 className="font-display text-3xl">No matching orders</h2>
             <p className="mt-3 text-sm text-muted">
-              New customer orders will appear here automatically every few seconds.
+              Adjust search or filter settings to see more results.
             </p>
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
-            {orders.map((order) => (
+            {visibleOrders.map((order) => (
               <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} />
             ))}
           </div>

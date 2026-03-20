@@ -1,10 +1,11 @@
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'John Belvedere'
 
 export const currency = (value) =>
-  new Intl.NumberFormat('en-BD', {
+  new Intl.NumberFormat('en-AU', {
     style: 'currency',
-    currency: 'BDT',
-    maximumFractionDigits: 0,
+    currency: 'AUD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value)
 
 export const formatOrderTime = (value) =>

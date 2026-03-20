@@ -93,3 +93,13 @@ export async function logoutUser() {
     if (!useMocks) throw error
   }
 }
+
+export async function requestPasswordReset(payload) {
+  const response = await api.post('/auth/forgot-password', payload)
+  return response.data || response
+}
+
+export async function resetPassword(payload) {
+  const response = await api.post('/auth/reset-password', payload)
+  return response.data || response
+}

@@ -24,7 +24,7 @@ function OrderCard({ order, onStatusChange }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-            Table {order.tableNumber}
+            Customer order
           </p>
           <h3 className="mt-2 font-display text-xl sm:text-2xl">Order #{order._id.slice(0, 6)}</h3>
           <p className="mt-2 text-sm text-muted">{formatOrderTime(order.createdAt)}</p>
@@ -81,7 +81,7 @@ function OrderCard({ order, onStatusChange }) {
             onClick={() => onStatusChange(order._id, status)}
             className={`rounded-2xl border px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition ${
               order.status === status
-                ? 'border-primary bg-primary text-white'
+                ? 'border-primary bg-primary text-bg-strong'
                 : 'border-border bg-surface hover:bg-surface-strong'
             }`}
           >

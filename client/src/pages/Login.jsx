@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 
 const initialRegister = {
   name: '',
@@ -19,6 +20,7 @@ function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signUp, login, loading } = useAuth()
+  const { showToast } = useToast()
   const [mode, setMode] = useState('login')
   const [registerData, setRegisterData] = useState(initialRegister)
   const [loginData, setLoginData] = useState(initialLogin)
@@ -41,8 +43,18 @@ function Login() {
           return
         }
         await signUp(registerData)
+        showToast({
+          tone: 'success',
+          title: 'Account created',
+          message: 'You are now logged in.',
+        })
       } else {
         await login(loginData)
+        showToast({
+          tone: 'success',
+          title: 'Welcome back',
+          message: 'Login successful.',
+        })
       }
       navigate(redirectTo, { replace: true })
     } catch (err) {
@@ -53,6 +65,11 @@ function Login() {
       if (err.code === 'ACCOUNT_NOT_FOUND') {
         setAccountMissingWarning(true)
         setMode('register')
+        showToast({
+          tone: 'info',
+          title: 'Sign up first',
+          message: 'No account was found for that email or phone.',
+        })
         return
       }
       setError(err.message)
@@ -85,7 +102,7 @@ function Login() {
                 type="button"
                 onClick={() => setMode(tab)}
                 className={`rounded-full px-5 py-2 text-sm font-semibold capitalize transition ${
-                  mode === tab ? 'bg-primary text-white' : 'text-muted'
+                  mode === tab ? 'bg-primary text-bg-strong' : 'text-muted'
                 }`}
               >
                 {tab}
@@ -151,6 +168,11 @@ function Login() {
             >
               {loading ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Login'}
             </button>
+            {mode === 'login' ? (
+              <Link to="/forgot-password" className="inline-flex text-sm font-semibold text-primary">
+                Forgot password?
+              </Link>
+            ) : null}
           </form>
         </section>
       </div>
@@ -171,7 +193,7 @@ function Login() {
                   setAccountExistsModal(false)
                   setMode('login')
                 }}
-                className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-strong"
+                className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong"
               >
                 Go to login
               </button>

@@ -76,7 +76,7 @@ function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-strong disabled:opacity-50"
+              className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong disabled:opacity-50"
             >
               {loading ? 'Checking access...' : 'Login to dashboard'}
             </button>
