@@ -11,6 +11,10 @@ export async function createAdminMenuItem(payload) {
 }
 
 export async function updateAdminMenuItem(menuItemId, payload) {
+  if (!payload || Object.keys(payload).length === 0) {
+    throw new Error('No changes to save.')
+  }
+
   const response = await api.put(`/menu/${menuItemId}`, payload)
   return response.data || response
 }

@@ -22,6 +22,33 @@ const initialForm = {
   image: '',
 }
 
+function normalizeMenuPayload(form) {
+  return {
+    name: form.name.trim(),
+    category: form.category.trim(),
+    price: Number(form.price),
+    description: form.description.trim(),
+    image: form.image.trim(),
+  }
+}
+
+function getChangedMenuFields(nextPayload, previousItem) {
+  return Object.fromEntries(
+    Object.entries(nextPayload).filter(([key, value]) => {
+      if (key === 'image' && value === '') {
+        return false
+      }
+
+      const previousValue =
+        key === 'price'
+          ? Number(previousItem?.[key] ?? 0)
+          : String(previousItem?.[key] ?? '')
+
+      return value !== previousValue
+    }),
+  )
+}
+
 function AdminMenuManager() {
   const { showToast } = useToast()
   const [menuItems, setMenuItems] = useState([])
@@ -30,6 +57,7 @@ function AdminMenuManager() {
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState('')
   const [editingId, setEditingId] = useState('')
+  const [editingItem, setEditingItem] = useState(null)
   const [form, setForm] = useState(initialForm)
   const [error, setError] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -74,12 +102,20 @@ function AdminMenuManager() {
     [categories, menuItems],
   )
 
+  const normalizedPayload = useMemo(() => normalizeMenuPayload(form), [form])
+  const pendingUpdates = useMemo(
+    () => (editingId ? getChangedMenuFields(normalizedPayload, editingItem) : normalizedPayload),
+    [editingId, editingItem, normalizedPayload],
+  )
+  const hasPendingChanges = !editingId || Object.keys(pendingUpdates).length > 0
+
   const handleChange = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
   const handleEdit = (item) => {
     setEditingId(item._id)
+    setEditingItem(item)
     setForm({
       name: item.name || '',
       category: item.category || '',
@@ -92,6 +128,7 @@ function AdminMenuManager() {
 
   const resetForm = () => {
     setEditingId('')
+    setEditingItem(null)
     setForm(initialForm)
   }
 
@@ -101,16 +138,19 @@ function AdminMenuManager() {
     try {
       setSubmitting(true)
       setError('')
-      const payload = {
-        name: form.name.trim(),
-        category: form.category.trim(),
-        price: Number(form.price),
-        description: form.description.trim(),
-        image: form.image.trim(),
-      }
+      const payload = normalizedPayload
 
       if (editingId) {
-        const updated = await updateAdminMenuItem(editingId, payload)
+        if (!Object.keys(pendingUpdates).length) {
+          showToast({
+            tone: 'info',
+            title: 'No changes to save',
+            message: 'Update at least one field before saving this menu item.',
+          })
+          return
+        }
+
+        const updated = await updateAdminMenuItem(editingId, pendingUpdates)
         setMenuItems((current) => current.map((item) => (item._id === editingId ? updated : item)))
         showToast({
           tone: 'success',
@@ -314,11 +354,11 @@ function AdminMenuManager() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || (editingId && !hasPendingChanges)}
               className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-primary px-5 py-4 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60 lg:col-span-2"
             >
               {editingId ? <Save size={16} /> : <Plus size={16} />}
-              {submitting ? 'Saving...' : editingId ? 'Update item' : 'Add item'}
+              {submitting ? 'Saving...' : editingId ? (hasPendingChanges ? 'Update item' : 'No changes yet') : 'Add item'}
             </button>
           </form>
         </div>
@@ -360,6 +400,13 @@ function AdminMenuManager() {
                         key={item._id}
                         className="flex h-full flex-col rounded-[24px] border border-border bg-surface-strong p-4"
                       >
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="mb-4 h-40 w-full rounded-[18px] object-cover"
+                          />
+                        ) : null}
                         <div className="flex items-start justify-between gap-3">
                           <h3 className="font-display text-2xl leading-tight">{item.name}</h3>
                           <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
@@ -367,9 +414,6 @@ function AdminMenuManager() {
                           </span>
                         </div>
                         <p className="mt-3 flex-1 text-sm leading-6 text-muted">{item.description}</p>
-                        <p className="mt-3 line-clamp-2 text-xs text-muted">
-                          {item.image ? item.image : 'No image added yet'}
-                        </p>
                         <div className="mt-4 flex gap-2">
                             <button
                               type="button"

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed } from 'lucide-react'
+import { BarChart3, LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import OrderCard from '../components/admin/OrderCard'
-import { fetchOrders, updateOrderStatus } from '../services/orderService'
+import { fetchOrders, updateOrderPaymentStatus, updateOrderStatus } from '../services/orderService'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
@@ -18,6 +18,10 @@ function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [error, setError] = useState('')
+  const [updatingStatusId, setUpdatingStatusId] = useState('')
+  const [updatingPaymentId, setUpdatingPaymentId] = useState('')
+  const [pendingStatusValue, setPendingStatusValue] = useState('')
+  const [pendingPaymentValue, setPendingPaymentValue] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
@@ -91,6 +95,8 @@ function AdminDashboard() {
 
   const handleStatusChange = async (orderId, status) => {
     try {
+      setUpdatingStatusId(orderId)
+      setPendingStatusValue(status)
       const updated = await updateOrderStatus(orderId, status)
       setOrders((current) =>
         current.map((order) => (order._id === orderId ? { ...order, ...updated } : order)),
@@ -108,6 +114,36 @@ function AdminDashboard() {
         title: 'Status update failed',
         message: err.message,
       })
+    } finally {
+      setUpdatingStatusId('')
+      setPendingStatusValue('')
+    }
+  }
+
+  const handlePaymentStatusChange = async (orderId, paymentStatus) => {
+    try {
+      setUpdatingPaymentId(orderId)
+      setPendingPaymentValue(paymentStatus)
+      const updated = await updateOrderPaymentStatus(orderId, paymentStatus)
+      setOrders((current) =>
+        current.map((order) => (order._id === orderId ? { ...order, ...updated } : order)),
+      )
+      setLastUpdated(new Date())
+      showToast({
+        tone: 'success',
+        title: paymentStatus === 'paid' ? 'Payment marked paid' : 'Payment marked unpaid',
+        message: `Order #${String(orderId).slice(0, 6)} is now ${paymentStatus}.`,
+      })
+    } catch (err) {
+      setError(err.message)
+      showToast({
+        tone: 'error',
+        title: 'Payment update failed',
+        message: err.message,
+      })
+    } finally {
+      setUpdatingPaymentId('')
+      setPendingPaymentValue('')
     }
   }
 
@@ -140,28 +176,35 @@ function AdminDashboard() {
 
   return (
     <AppShell>
-      <section className="flex flex-wrap items-start justify-between gap-4">
+      <section className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <SectionHeading
           eyebrow="Admin Dashboard"
           title="Kitchen and floor order management"
           description="Monitor table activity, track order status, and prepare for future real-time event updates."
         />
-        <div className="flex gap-2">
+        <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap">
           <Link
             to="/admin/menu"
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong xl:w-auto"
           >
             <UtensilsCrossed size={16} />
             Manage menu
           </Link>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong xl:w-auto"
           >
             <Users size={16} />
             Users
           </Link>
-          <div className="hidden items-center gap-2 rounded-full border border-border px-4 py-3 text-sm text-muted sm:inline-flex">
+          <Link
+            to="/admin/reports"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong xl:w-auto"
+          >
+            <BarChart3 size={16} />
+            Daily reports
+          </Link>
+          <div className="hidden items-center gap-2 rounded-full border border-border px-4 py-3 text-sm text-muted xl:inline-flex">
             {refreshing ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             {refreshing
               ? 'Auto refreshing...'
@@ -172,7 +215,7 @@ function AdminDashboard() {
           <button
             type="button"
             onClick={() => loadOrders({ silent: true })}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong xl:w-auto"
           >
             <RefreshCw size={16} />
             Refresh
@@ -180,7 +223,7 @@ function AdminDashboard() {
           <button
             type="button"
             onClick={logout}
-            className="inline-flex items-center gap-2 rounded-full bg-text px-4 py-3 text-sm font-semibold text-bg transition hover:opacity-90"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-text px-4 py-3 text-sm font-semibold text-bg transition hover:opacity-90 xl:w-auto"
           >
             <LogOut size={16} />
             Logout
@@ -260,7 +303,16 @@ function AdminDashboard() {
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
             {visibleOrders.map((order) => (
-              <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} />
+              <OrderCard
+                key={order._id}
+                order={order}
+                onStatusChange={handleStatusChange}
+                onPaymentStatusChange={handlePaymentStatusChange}
+                statusUpdating={updatingStatusId === order._id}
+                paymentUpdating={updatingPaymentId === order._id}
+                statusPendingValue={pendingStatusValue}
+                paymentPendingValue={pendingPaymentValue}
+              />
             ))}
           </div>
         )}

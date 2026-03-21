@@ -1,6 +1,8 @@
-import { formatOrderTime } from '../../utils/helpers'
+import { Download, LoaderCircle } from 'lucide-react'
+import { currency, downloadOrderVoucher, formatOrderTime } from '../../utils/helpers'
 
 const statuses = ['pending', 'preparing', 'served']
+const paymentStatuses = ['unpaid', 'paid']
 
 const statusStyles = {
   pending: 'bg-amber-500/15 text-amber-600 dark:text-amber-300',
@@ -18,7 +20,15 @@ const paymentStatusStyles = {
   paid: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
 }
 
-function OrderCard({ order, onStatusChange }) {
+function OrderCard({
+  order,
+  onStatusChange,
+  onPaymentStatusChange,
+  statusUpdating = false,
+  paymentUpdating = false,
+  statusPendingValue = '',
+  paymentPendingValue = '',
+}) {
   return (
     <article className="glass-panel rounded-[28px] p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
@@ -55,7 +65,7 @@ function OrderCard({ order, onStatusChange }) {
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-muted">Amount</p>
-          <p className="mt-2 font-semibold">{order.totalPrice} BDT</p>
+          <p className="mt-2 font-semibold">{currency(order.totalPrice || 0)}</p>
         </div>
       </div>
 
@@ -68,7 +78,9 @@ function OrderCard({ order, onStatusChange }) {
             <span className="min-w-0 text-muted">
               {item.quantity}x {item.name}
             </span>
-            <span className="shrink-0 font-semibold">{item.price * item.quantity} BDT</span>
+            <span className="shrink-0 font-semibold">
+              {currency(Number(item.price || 0) * Number(item.quantity || 0))}
+            </span>
           </div>
         ))}
       </div>
@@ -79,15 +91,57 @@ function OrderCard({ order, onStatusChange }) {
             key={status}
             type="button"
             onClick={() => onStatusChange(order._id, status)}
+            disabled={statusUpdating}
             className={`rounded-2xl border px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition ${
               order.status === status
                 ? 'border-primary bg-primary text-bg-strong'
                 : 'border-border bg-surface hover:bg-surface-strong'
-            }`}
+            } ${statusUpdating ? 'cursor-progress opacity-70' : 'cursor-pointer'}`}
           >
-            {status}
+            {statusUpdating && statusPendingValue === status ? (
+              <span className="inline-flex items-center gap-2">
+                <LoaderCircle size={14} className="animate-spin" />
+                Saving
+              </span>
+            ) : (
+              status
+            )}
           </button>
         ))}
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        {paymentStatuses.map((paymentStatus) => (
+          <button
+            key={paymentStatus}
+            type="button"
+            onClick={() => onPaymentStatusChange(order._id, paymentStatus)}
+            disabled={paymentUpdating}
+            className={`rounded-2xl border px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+              (order.paymentStatus || 'unpaid') === paymentStatus
+                ? 'border-text bg-text text-bg'
+                : 'border-border bg-surface hover:bg-surface-strong'
+            } ${paymentUpdating ? 'cursor-progress opacity-70' : 'cursor-pointer'}`}
+          >
+            {paymentUpdating && paymentPendingValue === paymentStatus ? (
+              <span className="inline-flex items-center gap-2">
+                <LoaderCircle size={14} className="animate-spin" />
+                Saving
+              </span>
+            ) : (
+              paymentStatus
+            )}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => downloadOrderVoucher(order, { title: 'John Belvedere Admin Voucher' })}
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition hover:bg-surface-strong"
+        >
+          <Download size={14} />
+          Voucher
+        </button>
       </div>
     </article>
   )

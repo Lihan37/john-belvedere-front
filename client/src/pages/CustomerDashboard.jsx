@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowRight, Clock3, CreditCard, LoaderCircle, ReceiptText, UserRound } from 'lucide-react'
+import { ArrowRight, Clock3, CreditCard, Download, LoaderCircle, ReceiptText, UserRound } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import { useAuth } from '../context/AuthContext'
 import { fetchMyOrders } from '../services/orderService'
 import { useToast } from '../context/ToastContext'
-import { currency, formatOrderTime } from '../utils/helpers'
+import { currency, downloadOrderVoucher, formatOrderTime } from '../utils/helpers'
 
 const POLLING_INTERVAL_MS = 12000
 
@@ -244,6 +244,9 @@ function CustomerDashboard() {
                     <span className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-semibold uppercase text-secondary">
                       {order.paymentMethod === 'stripe' ? 'Stripe later' : 'Counter'}
                     </span>
+                    <span className="rounded-full bg-text/10 px-3 py-1 text-xs font-semibold uppercase text-text">
+                      {order.paymentStatus || 'unpaid'}
+                    </span>
                   </div>
                 </div>
 
@@ -261,9 +264,19 @@ function CustomerDashboard() {
                   ))}
                 </div>
 
-                <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                  <span className="text-sm text-muted">Total</span>
-                  <span className="text-lg font-semibold text-primary">{currency(order.totalPrice)}</span>
+                <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <span className="text-sm text-muted">Total</span>
+                    <p className="text-lg font-semibold text-primary">{currency(order.totalPrice)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadOrderVoucher(order, { title: 'John Belvedere Customer Voucher' })}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[18px] border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+                  >
+                    <Download size={16} />
+                    Download voucher
+                  </button>
                 </div>
               </article>
             ))

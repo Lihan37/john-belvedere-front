@@ -6,6 +6,7 @@ import Success from '../pages/Success'
 import AdminLogin from '../pages/AdminLogin'
 import AdminDashboard from '../pages/AdminDashboard'
 import AdminMenuManager from '../pages/AdminMenuManager'
+import AdminReports from '../pages/AdminReports'
 import AdminUsers from '../pages/AdminUsers'
 import CustomerDashboard from '../pages/CustomerDashboard'
 import ProtectedRoute from '../components/common/ProtectedRoute'
@@ -40,6 +41,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute adminOnly>
             <AdminMenuManager />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminReports />
           </ProtectedRoute>
         }
       />

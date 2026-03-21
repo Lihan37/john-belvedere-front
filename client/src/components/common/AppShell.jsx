@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from 'lucide-react'
+import { BarChart3, LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
@@ -54,14 +54,24 @@ function AppShell({ children }) {
   ) : null
 
   const primaryActions = isAdmin ? (
-    <NavLink
-      to="/admin/dashboard"
-      onClick={() => setMobileMenuOpen(false)}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-surface-strong"
-    >
-      <LayoutDashboard size={16} />
-      Dashboard
-    </NavLink>
+    <>
+      <NavLink
+        to="/admin/dashboard"
+        onClick={() => setMobileMenuOpen(false)}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-surface-strong"
+      >
+        <LayoutDashboard size={16} />
+        Dashboard
+      </NavLink>
+      <NavLink
+        to="/admin/reports"
+        onClick={() => setMobileMenuOpen(false)}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-surface-strong"
+      >
+        <BarChart3 size={16} />
+        Reports
+      </NavLink>
+    </>
   ) : (
     <NavLink
       to="/cart"

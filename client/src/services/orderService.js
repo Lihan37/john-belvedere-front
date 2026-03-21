@@ -65,3 +65,71 @@ export async function updateOrderStatus(orderId, status, token) {
     return updatedOrders.find((order) => order._id === orderId)
   }
 }
+
+export async function updateOrderPaymentStatus(orderId, paymentStatus) {
+  try {
+    const response = await api.put(`/orders/${orderId}/payment`, { paymentStatus })
+    return response.data || response
+  } catch (error) {
+    if (!useMocks) throw error
+    const updatedOrders = getMockOrders().map((order) =>
+      order._id === orderId ? { ...order, paymentStatus } : order,
+    )
+    storage.set(storageKey, updatedOrders)
+    return updatedOrders.find((order) => order._id === orderId)
+  }
+}
+
+export async function fetchDailyOrderReport(date) {
+  try {
+    const query = date ? `?date=${encodeURIComponent(date)}` : ''
+    const response = await api.get(`/orders/reports/daily${query}`)
+    return response.data || response
+  } catch (error) {
+    if (!useMocks) throw error
+
+    const orders = getMockOrders()
+    const summary = orders.reduce(
+      (accumulator, order) => {
+        const totalPrice = Number(order.totalPrice || 0)
+        const paymentStatus = order.paymentStatus || 'unpaid'
+        const paymentMethod = order.paymentMethod || 'counter'
+
+        accumulator.totalOrders += 1
+        accumulator.totalItems += (order.items || []).reduce(
+          (itemCount, item) => itemCount + Number(item.quantity || 0),
+          0,
+        )
+        accumulator.byStatus[order.status] = (accumulator.byStatus[order.status] || 0) + 1
+        accumulator.byPaymentMethod[paymentMethod] =
+          (accumulator.byPaymentMethod[paymentMethod] || 0) + 1
+
+        if (paymentStatus === 'paid') {
+          accumulator.paidOrders += 1
+          accumulator.paidIncome += totalPrice
+        } else {
+          accumulator.unpaidOrders += 1
+          accumulator.unpaidAmount += totalPrice
+        }
+
+        return accumulator
+      },
+      {
+        totalOrders: 0,
+        totalItems: 0,
+        paidOrders: 0,
+        unpaidOrders: 0,
+        paidIncome: 0,
+        unpaidAmount: 0,
+        byStatus: { pending: 0, preparing: 0, served: 0 },
+        byPaymentMethod: { counter: 0, stripe: 0 },
+      },
+    )
+
+    return {
+      date: new Date().toISOString(),
+      summary,
+      orders,
+    }
+  }
+}
