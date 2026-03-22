@@ -4,7 +4,7 @@ import { CheckCircle2, CircleAlert, Info, X } from 'lucide-react'
 const ToastContext = createContext(null)
 
 const toneStyles = {
-  success: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200',
+  success: 'border-emerald-500/40 bg-emerald-100 text-emerald-950 dark:bg-emerald-500/15 dark:text-emerald-100',
   error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
   info: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
 }
@@ -53,7 +53,7 @@ export function ToastProvider({ children }) {
                 <Icon size={18} className="mt-0.5 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">{toast.title}</p>
-                  {toast.message ? <p className="mt-1 text-sm opacity-90">{toast.message}</p> : null}
+                  {toast.message ? <p className="mt-1 text-sm opacity-100">{toast.message}</p> : null}
                 </div>
                 <button
                   type="button"
