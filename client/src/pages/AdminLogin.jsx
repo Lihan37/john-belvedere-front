@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import { useAuth } from '../context/useAuth'
-import { getAllowedAdminPhones } from '../utils/helpers'
 
 function AdminLogin() {
   const navigate = useNavigate()
@@ -37,12 +36,8 @@ function AdminLogin() {
             Restricted dashboard login for restaurant operations.
           </h1>
           <p className="mt-4 text-sm leading-6 text-muted">
-            The frontend is prepared for multiple admin numbers later. For now, only whitelisted phone numbers can enter.
+            Only authorized restaurant staff can access the operational dashboard with their approved phone number and password.
           </p>
-          <div className="mt-6 rounded-[24px] border border-border bg-surface-strong p-5">
-            <p className="text-sm font-semibold">Current allowed number(s)</p>
-            <p className="mt-2 text-sm text-muted">{getAllowedAdminPhones().join(', ') || 'Configured from env'}</p>
-          </div>
         </section>
 
         <section className="glass-panel rounded-[32px] p-6 sm:p-8">
@@ -54,7 +49,7 @@ function AdminLogin() {
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
                 className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
-                placeholder="01716285196"
+                placeholder="Enter authorized admin phone"
                 required
               />
             </label>

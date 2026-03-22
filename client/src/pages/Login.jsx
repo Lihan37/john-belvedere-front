@@ -90,9 +90,12 @@ function Login() {
             <p className="mt-4 text-sm leading-6 text-muted">
               Already registered? Login and continue. If you do not have an account yet, create one first before trying to sign in.
             </p>
-            <Link to="/admin/login" className="mt-4 inline-flex text-sm font-semibold text-primary">
-              Admin login
-            </Link>
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted">
+              Restaurant staff?
+              <Link to="/admin/login" className="font-semibold text-primary">
+                Go to admin access
+              </Link>
+            </div>
           </div>
 
           <div className="inline-flex rounded-full border border-border p-1">
