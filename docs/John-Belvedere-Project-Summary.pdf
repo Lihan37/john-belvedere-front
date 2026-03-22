@@ -1,0 +1,543 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R] /Count 6 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1641 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+(JOHN BELVEDERE ORDERING SYSTEM) Tj
+T*
+() Tj
+T*
+(Project Summary and Workflow Document) Tj
+T*
+() Tj
+T*
+(Prepared for: Business Owner) Tj
+T*
+(Prepared on: 2026-03-22) Tj
+T*
+() Tj
+T*
+(1. PROJECT OVERVIEW) Tj
+T*
+() Tj
+T*
+(This project is a dine-in digital ordering platform for John Belvedere. Customers can browse) Tj
+T*
+(the menu, create an account, place orders, choose payment method, and track order progress.) Tj
+T*
+(Restaurant staff can manage menu items, monitor live orders, update payment status, download) Tj
+T*
+(vouchers, review daily reports, and receive on-site order alerts.) Tj
+T*
+() Tj
+T*
+(The system is split into two applications:) Tj
+T*
+() Tj
+T*
+(? Frontend: React + Vite customer/admin interface) Tj
+T*
+(? Backend: Node.js + Express + MongoDB API) Tj
+T*
+() Tj
+T*
+(The platform has also been prepared for deployment with:) Tj
+T*
+() Tj
+T*
+(? Frontend on Netlify) Tj
+T*
+(? Backend on Railway) Tj
+T*
+(? Cloudinary for image hosting) Tj
+T*
+(? Stripe Checkout in test mode) Tj
+T*
+() Tj
+T*
+(2. MAIN MODULES IMPLEMENTED) Tj
+T*
+() Tj
+T*
+(CUSTOMER SIDE) Tj
+T*
+() Tj
+T*
+(? Menu browsing with category filtering) Tj
+T*
+(? Add to cart flow) Tj
+T*
+(? Visible add-to-cart notification feedback) Tj
+T*
+(? Customer registration and login) Tj
+T*
+(? Customer account dashboard) Tj
+T*
+(? Live order history and current order tracking) Tj
+T*
+(? Counter checkout flow) Tj
+T*
+(? Stripe Checkout flow in test mode) Tj
+T*
+(? Voucher download for customer orders) Tj
+T*
+() Tj
+T*
+(ADMIN SIDE) Tj
+T*
+() Tj
+T*
+(? Admin login with approved phone-number based access) Tj
+T*
+(? Admin dashboard for live order management) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 1690 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+(? Order status update controls) Tj
+T*
+(? Payment status update controls) Tj
+T*
+(? In-site new order notification system) Tj
+T*
+(? New order sound alert for admins) Tj
+T*
+(? Menu management page) Tj
+T*
+(? User management page) Tj
+T*
+(? Daily order and income reporting page) Tj
+T*
+(? Voucher download for admin orders) Tj
+T*
+() Tj
+T*
+(BACKEND/API SIDE) Tj
+T*
+() Tj
+T*
+(? Auth and protected routes) Tj
+T*
+(? Cookie-based session handling) Tj
+T*
+(? Menu CRUD endpoints) Tj
+T*
+(? Order creation and update endpoints) Tj
+T*
+(? Daily report endpoint) Tj
+T*
+(? Stripe Checkout session creation endpoint) Tj
+T*
+(? Stripe webhook handler for payment confirmation) Tj
+T*
+(? Environment validation for critical server configuration) Tj
+T*
+() Tj
+T*
+(3. COMPLETED WORKFLOW) Tj
+T*
+() Tj
+T*
+(CUSTOMER ORDERING WORKFLOW) Tj
+T*
+() Tj
+T*
+(1. Customer opens the menu page.) Tj
+T*
+(2. Customer browses menu categories and items.) Tj
+T*
+(3. Customer clicks Add to cart.) Tj
+T*
+(4. The system gives visible feedback that the item was added.) Tj
+T*
+(5. Customer reviews cart contents.) Tj
+T*
+(6. Customer chooses either:) Tj
+T*
+(   - Cash at counter) Tj
+T*
+(   - Stripe payment) Tj
+T*
+(7. If counter is selected:) Tj
+T*
+(   - Order is created immediately) Tj
+T*
+(   - Payment status remains unpaid) Tj
+T*
+(8. If Stripe is selected:) Tj
+T*
+(   - Order is created first) Tj
+T*
+(   - Customer is redirected to Stripe Checkout) Tj
+T*
+(   - After successful payment, the order is marked paid) Tj
+T*
+(9. Customer returns to the success page.) Tj
+T*
+(10. Customer can later view the order in their dashboard and download a voucher.) Tj
+T*
+() Tj
+T*
+(ADMIN OPERATIONS WORKFLOW) Tj
+T*
+() Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 1784 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+(1. Admin logs in through the restricted admin access page.) Tj
+T*
+(2. Admin opens the live dashboard.) Tj
+T*
+(3. New incoming orders appear automatically during polling refresh.) Tj
+T*
+(4. Admin receives:) Tj
+T*
+(   - In-site visual alert) Tj
+T*
+(   - Toast notification) Tj
+T*
+(   - Sound alert) Tj
+T*
+(5. Admin updates:) Tj
+T*
+(   - Kitchen/order status) Tj
+T*
+(   - Payment status) Tj
+T*
+(6. Admin can manage menu items and upload images through Cloudinary.) Tj
+T*
+(7. Admin can review all users.) Tj
+T*
+(8. Admin can open the Daily Reports page to check:) Tj
+T*
+(   - Number of orders) Tj
+T*
+(   - Number of paid orders) Tj
+T*
+(   - Number of unpaid orders) Tj
+T*
+(   - Recognized income) Tj
+T*
+(   - Payment mix) Tj
+T*
+(9. Admin can download vouchers for record keeping.) Tj
+T*
+() Tj
+T*
+(4. PAYMENT WORKFLOW) Tj
+T*
+() Tj
+T*
+(COUNTER PAYMENT) Tj
+T*
+() Tj
+T*
+(? Customer places order) Tj
+T*
+(? Order is created with payment status unpaid) Tj
+T*
+(? Staff can later mark it paid from admin dashboard) Tj
+T*
+(? Paid orders are counted in business reporting only after payment status is updated) Tj
+T*
+() Tj
+T*
+(STRIPE PAYMENT) Tj
+T*
+() Tj
+T*
+(? Customer selects Stripe payment) Tj
+T*
+(? Backend creates the order first) Tj
+T*
+(? Backend creates Stripe Checkout Session) Tj
+T*
+(? Customer pays on Stripe Checkout page) Tj
+T*
+(? Stripe redirects customer to success page) Tj
+T*
+(? Stripe webhook confirms successful payment) Tj
+T*
+(? Backend marks the related order as paid automatically) Tj
+T*
+(? Paid Stripe orders appear correctly in admin reporting) Tj
+T*
+() Tj
+T*
+(5. REPORTING LOGIC) Tj
+T*
+() Tj
+T*
+(The reporting page has been designed so that only paid orders contribute to recognized) Tj
+T*
+(income. This is important for business accuracy.) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 10 0 R >>
+endobj
+10 0 obj
+<< /Length 1509 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+() Tj
+T*
+(Included in income:) Tj
+T*
+() Tj
+T*
+(? Orders with paymentStatus = paid) Tj
+T*
+() Tj
+T*
+(Excluded from income until payment is confirmed:) Tj
+T*
+() Tj
+T*
+(? Counter orders still marked unpaid) Tj
+T*
+(? Any unpaid order) Tj
+T*
+() Tj
+T*
+(This ensures daily figures are aligned with actual received payments.) Tj
+T*
+() Tj
+T*
+(6. DEPLOYMENT STATUS) Tj
+T*
+() Tj
+T*
+(FRONTEND) Tj
+T*
+() Tj
+T*
+(? Prepared for Netlify deployment) Tj
+T*
+(? SPA redirect support added) Tj
+T*
+(? Production API environment variable structure prepared) Tj
+T*
+() Tj
+T*
+(BACKEND) Tj
+T*
+() Tj
+T*
+(? Prepared for Railway deployment) Tj
+T*
+(? CORS configured for deployed frontend origin) Tj
+T*
+(? Auth cookie configuration adapted for production) Tj
+T*
+(? Startup environment validation added) Tj
+T*
+() Tj
+T*
+(7. INTEGRATIONS IMPLEMENTED) Tj
+T*
+() Tj
+T*
+(? MongoDB database) Tj
+T*
+(? Cloudinary image uploads for menu items) Tj
+T*
+(? Stripe Checkout in test mode) Tj
+T*
+(? Stripe webhook-based payment confirmation) Tj
+T*
+() Tj
+T*
+(8. BUSINESS VALUE DELIVERED) Tj
+T*
+() Tj
+T*
+(The project now provides a real operational base for a restaurant ordering flow instead of a) Tj
+T*
+(demo-only interface. It supports actual order intake, menu administration, reporting) Tj
+T*
+(visibility, and modern payment workflow preparation.) Tj
+T*
+() Tj
+T*
+(Key value delivered:) Tj
+T*
+() Tj
+T*
+(? Reduced manual ordering friction for dine-in customers) Tj
+T*
+(? Faster operational visibility for restaurant staff) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 12 0 R >>
+endobj
+12 0 obj
+<< /Length 1972 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+(? Cleaner distinction between paid and unpaid revenue) Tj
+T*
+(? Admin control over menu, orders, and users) Tj
+T*
+(? Downloadable order vouchers for records) Tj
+T*
+(? Foundation for future production payment launch) Tj
+T*
+() Tj
+T*
+(9. CURRENT NOTES / TEST-PHASE STATE) Tj
+T*
+() Tj
+T*
+(? Stripe is integrated in test mode) Tj
+T*
+(? Email sending can be enabled later if required) Tj
+T*
+(? A custom branded mail domain can be added later if business access is provided) Tj
+T*
+(? Browser audio policies may require one admin interaction before sound alerts are audible) Tj
+T*
+() Tj
+T*
+(10. RECOMMENDED NEXT STEPS) Tj
+T*
+() Tj
+T*
+(IMMEDIATE) Tj
+T*
+() Tj
+T*
+(? Verify Stripe webhook behavior on deployed production environment) Tj
+T*
+(? Confirm paid status updates after real test transactions) Tj
+T*
+(? Confirm admin alert behavior during live order placement) Tj
+T*
+() Tj
+T*
+(SHORT-TERM) Tj
+T*
+() Tj
+T*
+(? Add branded email domain access if the business provides DNS control) Tj
+T*
+(? Replace any remaining test-mode messaging where needed) Tj
+T*
+(? Perform final owner acceptance testing) Tj
+T*
+() Tj
+T*
+(COMMERCIAL HANDOVER) Tj
+T*
+() Tj
+T*
+(This system is already at a stage where it can be presented as a delivered product with:) Tj
+T*
+() Tj
+T*
+(? Completed customer ordering flow) Tj
+T*
+(? Completed admin operations flow) Tj
+T*
+(? Completed reporting logic) Tj
+T*
+(? Completed Stripe test integration) Tj
+T*
+(? Deployed frontend/backend structure) Tj
+T*
+() Tj
+T*
+(This document can be used as a handover summary and as supporting material for payment) Tj
+T*
+(collection or milestone confirmation with the owner.) Tj
+T*
+() Tj
+T*
+(11. SUMMARY) Tj
+T*
+() Tj
+T*
+(The John Belvedere ordering platform now includes customer ordering, admin management,) Tj
+T*
+(Stripe payment flow in test mode, reporting, voucher download, menu maintenance, and) Tj
+T*
+(operational alerts. The site has moved beyond a static interface and now functions as a) Tj
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 14 0 R >>
+endobj
+14 0 obj
+<< /Length 128 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+(working restaurant ordering system with live operational features and deployment readiness.) Tj
+ET
+endstream
+endobj
+xref
+0 15
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000147 00000 n 
+0000000322 00000 n 
+0000002015 00000 n 
+0000002190 00000 n 
+0000003932 00000 n 
+0000004107 00000 n 
+0000005943 00000 n 
+0000006119 00000 n 
+0000007681 00000 n 
+0000007858 00000 n 
+0000009883 00000 n 
+0000010060 00000 n 
+trailer
+<< /Size 15 /Root 1 0 R >>
+startxref
+10240
+%%EOF

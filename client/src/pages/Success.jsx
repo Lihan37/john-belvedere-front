@@ -15,16 +15,22 @@ function Success() {
 
   useEffect(() => {
     let active = true
+    let intervalId
 
     async function loadStripeOrder() {
       if (!sessionId) return
 
       try {
-        setLoading(true)
+        if (!stripeOrder) {
+          setLoading(true)
+        }
         setError('')
         const response = await fetchStripeCheckoutSessionStatus(sessionId)
         if (!active) return
-        setStripeOrder(response.order)
+        if (response.order) {
+          setStripeOrder(response.order)
+          window.clearInterval(intervalId)
+        }
       } catch (err) {
         if (!active) return
         setError(err.message)
@@ -37,10 +43,18 @@ function Success() {
 
     loadStripeOrder()
 
+    if (sessionId) {
+      intervalId = window.setInterval(() => {
+        if (!active) return
+        loadStripeOrder()
+      }, 2500)
+    }
+
     return () => {
       active = false
+      window.clearInterval(intervalId)
     }
-  }, [sessionId])
+  }, [sessionId, stripeOrder])
 
   return (
     <AppShell>
@@ -56,7 +70,9 @@ function Success() {
         </h1>
         <p className="mt-4 text-sm leading-6 text-muted">
           {sessionId
-            ? 'Stripe confirmed your payment. The order is now recorded and marked paid for the admin team.'
+            ? stripeOrder
+              ? 'Stripe confirmed your payment. The order is now recorded and marked paid for the admin team.'
+              : 'Stripe payment was successful. We are confirming your order with the restaurant now.'
             : 'Your order has been sent to the kitchen. Staff can now manage the status from the admin dashboard.'}
         </p>
         {loading ? (

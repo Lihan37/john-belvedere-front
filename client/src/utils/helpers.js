@@ -58,25 +58,34 @@ export function playNotificationSound() {
 
   try {
     const audioContext = new AudioContextClass()
-    const oscillator = audioContext.createOscillator()
-    const gainNode = audioContext.createGain()
+    const now = audioContext.currentTime
+    const tones = [
+      { frequency: 880, start: 0, duration: 0.22 },
+      { frequency: 660, start: 0.24, duration: 0.22 },
+      { frequency: 990, start: 0.5, duration: 0.3 },
+    ]
 
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime)
-    oscillator.frequency.exponentialRampToValueAtTime(660, audioContext.currentTime + 0.18)
+    tones.forEach(({ frequency, start, duration }) => {
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
 
-    gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime)
-    gainNode.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.02)
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.24)
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(frequency, now + start)
 
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.destination)
+      gainNode.gain.setValueAtTime(0.0001, now + start)
+      gainNode.gain.exponentialRampToValueAtTime(0.16, now + start + 0.03)
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + start + duration)
 
-    oscillator.start()
-    oscillator.stop(audioContext.currentTime + 0.24)
-    oscillator.onended = () => {
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.start(now + start)
+      oscillator.stop(now + start + duration)
+    })
+
+    window.setTimeout(() => {
       audioContext.close().catch(() => {})
-    }
+    }, 1200)
   } catch {
     // Ignore autoplay or audio initialization failures.
   }
