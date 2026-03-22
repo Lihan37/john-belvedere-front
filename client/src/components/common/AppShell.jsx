@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { BarChart3, LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/useAuth'
 
 function AppShell({ children }) {
   const location = useLocation()

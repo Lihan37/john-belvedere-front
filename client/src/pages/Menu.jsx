@@ -6,7 +6,7 @@ import CategoryTabs from '../components/menu/CategoryTabs'
 import MenuCard from '../components/menu/MenuCard'
 import { useCart } from '../context/CartContext'
 import { fetchMenu } from '../services/menuService'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 function Menu() {
   const { addToCart } = useCart()

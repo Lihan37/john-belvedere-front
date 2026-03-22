@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { getAllowedAdminPhones } from '../utils/helpers'
 
 function AdminLogin() {

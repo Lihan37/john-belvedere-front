@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   getCurrentUser,
   loginAdmin,
@@ -6,23 +6,12 @@ import {
   logoutUser,
   registerCustomer,
 } from '../services/authService'
-import { storage } from '../utils/helpers'
-
-const AuthContext = createContext(null)
-const storageKey = 'jb_auth'
+import { AuthContext } from './useAuth'
 
 export function AuthProvider({ children }) {
-  const [auth, setAuth] = useState(() =>
-    storage.get(storageKey, {
-      user: null,
-    }),
-  )
+  const [auth, setAuth] = useState({ user: null })
   const [loading, setLoading] = useState(false)
   const [authReady, setAuthReady] = useState(false)
-
-  useEffect(() => {
-    storage.set(storageKey, auth)
-  }, [auth])
 
   useEffect(() => {
     let active = true
@@ -102,10 +91,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within AuthProvider')
-  return context
 }

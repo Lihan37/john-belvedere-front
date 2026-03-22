@@ -5,7 +5,7 @@ import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import OrderCard from '../components/admin/OrderCard'
 import { fetchOrders, updateOrderPaymentStatus, updateOrderStatus } from '../services/orderService'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { useToast } from '../context/ToastContext'
 
 const POLLING_INTERVAL_MS = 15000
