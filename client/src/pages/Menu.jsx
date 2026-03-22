@@ -5,12 +5,14 @@ import SectionHeading from '../components/common/SectionHeading'
 import CategoryTabs from '../components/menu/CategoryTabs'
 import MenuCard from '../components/menu/MenuCard'
 import { useCart } from '../context/CartContext'
+import { useToast } from '../context/ToastContext'
 import { fetchMenu } from '../services/menuService'
 import { useAuth } from '../context/useAuth'
 
 function Menu() {
   const { addToCart } = useCart()
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [menuItems, setMenuItems] = useState([])
   const [activeCategory, setActiveCategory] = useState('All')
   const [loading, setLoading] = useState(true)
@@ -72,6 +74,16 @@ function Menu() {
       }))
       .filter((group) => group.items.length > 0)
   }, [activeCategory, categories, visibleItems])
+
+  const handleAddToCart = (item) => {
+    addToCart(item)
+    showToast({
+      tone: 'success',
+      title: 'Added to cart',
+      message: `${item.name} is ready in your cart.`,
+      duration: 2200,
+    })
+  }
 
   return (
     <AppShell>
@@ -145,7 +157,7 @@ function Menu() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {group.items.map((item) => (
-                    <MenuCard key={item._id} item={item} onAdd={addToCart} />
+                    <MenuCard key={item._id} item={item} onAdd={handleAddToCart} />
                   ))}
                 </div>
               </section>
@@ -154,7 +166,7 @@ function Menu() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {visibleItems.map((item) => (
-              <MenuCard key={item._id} item={item} onAdd={addToCart} />
+              <MenuCard key={item._id} item={item} onAdd={handleAddToCart} />
             ))}
           </div>
         )}
