@@ -176,7 +176,7 @@ function Cart() {
             </div>
             <div className="flex items-center justify-between text-sm text-muted">
               <span>Payment</span>
-              <span>{paymentMethod === 'counter' ? 'Counter' : 'Stripe later'}</span>
+              <span>{paymentMethod === 'counter' ? 'Counter' : 'Stripe payment'}</span>
             </div>
             <div className="flex items-center justify-between border-t border-border pt-3 font-semibold">
               <span>Total</span>

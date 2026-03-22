@@ -86,7 +86,7 @@ export function downloadOrderVoucher(order, options = {}) {
   if (!order) return
 
   const title = options.title || APP_NAME
-  const paymentMethod = order.paymentMethod === 'stripe' ? 'Stripe later' : 'Counter cash'
+  const paymentMethod = order.paymentMethod === 'stripe' ? 'Stripe payment' : 'Counter cash'
   const paymentStatus = order.paymentStatus || 'unpaid'
   const itemsMarkup = (order.items || [])
     .map(

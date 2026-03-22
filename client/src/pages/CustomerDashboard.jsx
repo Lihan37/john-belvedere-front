@@ -242,7 +242,7 @@ function CustomerDashboard() {
                       {order.status}
                     </span>
                     <span className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-semibold uppercase text-secondary">
-                      {order.paymentMethod === 'stripe' ? 'Stripe later' : 'Counter'}
+                      {order.paymentMethod === 'stripe' ? 'Stripe payment' : 'Counter'}
                     </span>
                     <span className="rounded-full bg-text/10 px-3 py-1 text-xs font-semibold uppercase text-text">
                       {order.paymentStatus || 'unpaid'}

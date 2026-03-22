@@ -299,7 +299,7 @@ function AdminDashboard() {
           ['Pending', metrics.pending],
           ['Preparing', metrics.preparing],
           ['Served', metrics.served],
-          ['Stripe later', metrics.stripe],
+          ['Stripe payment', metrics.stripe],
           ['Counter', metrics.counter],
         ].map(([label, value]) => (
           <div key={label} className="glass-panel rounded-[24px] p-4 sm:rounded-[28px] sm:p-5">
@@ -335,7 +335,7 @@ function AdminDashboard() {
         >
           <option value="all">All payments</option>
           <option value="counter">Counter</option>
-          <option value="stripe">Stripe later</option>
+          <option value="stripe">Stripe payment</option>
         </select>
         <select
           value={sortBy}

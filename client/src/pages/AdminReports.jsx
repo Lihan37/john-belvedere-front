@@ -204,7 +204,7 @@ function AdminReports() {
                       </p>
                       <h3 className="mt-2 font-display text-2xl">{formatOrderTime(order.createdAt)}</h3>
                       <p className="mt-3 text-sm text-muted">
-                        {order.items.length} items, {order.paymentMethod === 'stripe' ? 'Stripe later' : 'Counter cash'}.
+                        {order.items.length} items, {order.paymentMethod === 'stripe' ? 'Stripe payment' : 'Counter cash'}.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

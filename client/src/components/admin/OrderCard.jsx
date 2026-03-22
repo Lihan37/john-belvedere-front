@@ -60,7 +60,7 @@ function OrderCard({
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-muted">Payment</p>
           <p className="mt-2 font-semibold">
-            {order.paymentMethod === 'stripe' ? 'Stripe later' : 'Counter cash'}
+            {order.paymentMethod === 'stripe' ? 'Stripe payment' : 'Counter cash'}
           </p>
         </div>
         <div>
