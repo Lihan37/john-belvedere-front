@@ -30,6 +30,11 @@ export async function createOrder(payload, token) {
   }
 }
 
+export async function createStripeCheckout(payload) {
+  const response = await api.post('/orders/checkout/stripe', payload)
+  return response.data || response
+}
+
 export async function fetchOrders(token) {
   try {
     const response = await api.get('/orders')
@@ -50,6 +55,11 @@ export async function fetchMyOrders() {
     }
     throw error
   }
+}
+
+export async function fetchStripeCheckoutSessionStatus(sessionId) {
+  const response = await api.get(`/orders/checkout/stripe/session/${sessionId}`)
+  return response.data || response
 }
 
 export async function updateOrderStatus(orderId, status, token) {

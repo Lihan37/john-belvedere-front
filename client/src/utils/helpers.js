@@ -50,6 +50,38 @@ export const storage = {
 export const calculateCartTotal = (items) =>
   items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
+export function playNotificationSound() {
+  if (typeof window === 'undefined') return
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextClass) return
+
+  try {
+    const audioContext = new AudioContextClass()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime)
+    oscillator.frequency.exponentialRampToValueAtTime(660, audioContext.currentTime + 0.18)
+
+    gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.02)
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.24)
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.start()
+    oscillator.stop(audioContext.currentTime + 0.24)
+    oscillator.onended = () => {
+      audioContext.close().catch(() => {})
+    }
+  } catch {
+    // Ignore autoplay or audio initialization failures.
+  }
+}
+
 export function downloadOrderVoucher(order, options = {}) {
   if (!order) return
 

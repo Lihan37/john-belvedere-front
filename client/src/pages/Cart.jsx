@@ -7,7 +7,7 @@ import CartItemRow from '../components/cart/CartItemRow'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/useAuth'
 import { useToast } from '../context/ToastContext'
-import { createOrder } from '../services/orderService'
+import { createOrder, createStripeCheckout } from '../services/orderService'
 import { currency } from '../utils/helpers'
 
 function Cart() {
@@ -32,19 +32,26 @@ function Cart() {
     try {
       setSubmitting(true)
       setError('')
-      const order = await createOrder(
-        {
-          paymentMethod,
-          items: items.map(({ _id, name, price, quantity }) => ({
-            menuItemId: _id,
-            name,
-            price,
-            quantity,
-          })),
-          totalPrice: total,
-          customerId: user?.id,
-        },
-      )
+      const payload = {
+        paymentMethod,
+        items: items.map(({ _id, name, price, quantity }) => ({
+          menuItemId: _id,
+          name,
+          price,
+          quantity,
+        })),
+        totalPrice: total,
+        customerId: user?.id,
+      }
+
+      if (paymentMethod === 'stripe') {
+        const checkout = await createStripeCheckout(payload)
+        clearCart()
+        window.location.assign(checkout.checkoutUrl)
+        return
+      }
+
+      const order = await createOrder(payload)
       clearCart()
       showToast({
         tone: 'success',
@@ -119,9 +126,9 @@ function Cart() {
                 {
                   id: 'stripe',
                   label: 'Stripe',
-                  description: 'Keep this selected for future online card checkout.',
+                  description: 'Pay online with Stripe Checkout in test mode.',
                   icon: CreditCard,
-                  available: false,
+                  available: true,
                 },
               ].map(({ id, label, description, icon: Icon, available }) => {
                 const active = paymentMethod === id
@@ -185,8 +192,8 @@ function Cart() {
             <p className="mt-2">
               {isAuthenticated
                 ? paymentMethod === 'counter'
-                  ? 'Counter payment is active now. Stripe selection is stored for future integration.'
-                  : 'Stripe is marked for future integration. Orders are still stored as unpaid until gateway setup is added.'
+                  ? 'Counter payment is active now. The order is created immediately and stays unpaid until staff marks it paid.'
+                  : 'Stripe will redirect you to Checkout. After successful payment, the order is confirmed and marked paid automatically.'
                 : 'Login is required before checkout. You can still review your cart first.'}
             </p>
           </div>

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { BarChart3, BellRing, LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
@@ -7,6 +7,7 @@ import OrderCard from '../components/admin/OrderCard'
 import { fetchOrders, updateOrderPaymentStatus, updateOrderStatus } from '../services/orderService'
 import { useAuth } from '../context/useAuth'
 import { useToast } from '../context/ToastContext'
+import { playNotificationSound } from '../utils/helpers'
 
 const POLLING_INTERVAL_MS = 15000
 
@@ -22,10 +23,12 @@ function AdminDashboard() {
   const [updatingPaymentId, setUpdatingPaymentId] = useState('')
   const [pendingStatusValue, setPendingStatusValue] = useState('')
   const [pendingPaymentValue, setPendingPaymentValue] = useState('')
+  const [newOrderAlert, setNewOrderAlert] = useState(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
+  const knownOrderIdsRef = useRef(null)
 
   const loadOrders = async ({ silent = false } = {}) => {
     try {
@@ -36,7 +39,33 @@ function AdminDashboard() {
       }
       setError('')
       const response = await fetchOrders()
+      const nextOrderIds = new Set(response.map((order) => order._id))
+
+      if (silent && knownOrderIdsRef.current) {
+        const newOrders = response.filter((order) => !knownOrderIdsRef.current.has(order._id))
+
+        if (newOrders.length) {
+          const latestOrder = newOrders[0]
+          setNewOrderAlert({
+            count: newOrders.length,
+            orderId: String(latestOrder._id).slice(0, 6),
+            createdAt: latestOrder.createdAt,
+          })
+          playNotificationSound()
+          showToast({
+            tone: 'info',
+            title: newOrders.length === 1 ? 'New order received' : `${newOrders.length} new orders received`,
+            message:
+              newOrders.length === 1
+                ? `Order #${String(latestOrder._id).slice(0, 6)} just arrived.`
+                : 'New customer orders just arrived on the dashboard.',
+            duration: 5000,
+          })
+        }
+      }
+
       setOrders(response)
+      knownOrderIdsRef.current = nextOrderIds
       setLastUpdated(new Date())
     } catch (err) {
       setError(err.message)
@@ -230,6 +259,39 @@ function AdminDashboard() {
           </button>
         </div>
       </section>
+
+      {newOrderAlert ? (
+        <section className="mt-6">
+          <div className="glass-panel flex flex-col gap-4 rounded-[28px] border border-primary/30 bg-primary/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-primary p-3 text-bg-strong">
+                <BellRing size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                  Live Order Alert
+                </p>
+                <h2 className="mt-2 font-display text-2xl">
+                  {newOrderAlert.count === 1
+                    ? `Order #${newOrderAlert.orderId} just came in`
+                    : `${newOrderAlert.count} new orders just came in`}
+                </h2>
+                <p className="mt-2 text-sm text-muted">
+                  Keep the dashboard open to hear the alert sound whenever fresh orders arrive.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNewOrderAlert(null)}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
+            >
+              <X size={16} />
+              Dismiss
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 xl:grid-cols-6">
         {[

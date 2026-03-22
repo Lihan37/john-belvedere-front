@@ -1,10 +1,46 @@
-import { Link, useLocation } from 'react-router-dom'
-import { CheckCircle2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { CheckCircle2, LoaderCircle } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
+import { fetchStripeCheckoutSessionStatus } from '../services/orderService'
 
 function Success() {
   const location = useLocation()
-  const orderId = location.state?.orderId
+  const [searchParams] = useSearchParams()
+  const [stripeOrder, setStripeOrder] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const orderId = location.state?.orderId || stripeOrder?._id
+  const sessionId = searchParams.get('session_id')
+
+  useEffect(() => {
+    let active = true
+
+    async function loadStripeOrder() {
+      if (!sessionId) return
+
+      try {
+        setLoading(true)
+        setError('')
+        const response = await fetchStripeCheckoutSessionStatus(sessionId)
+        if (!active) return
+        setStripeOrder(response.order)
+      } catch (err) {
+        if (!active) return
+        setError(err.message)
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadStripeOrder()
+
+    return () => {
+      active = false
+    }
+  }, [sessionId])
 
   return (
     <AppShell>
@@ -15,10 +51,21 @@ function Success() {
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
           Order Confirmed
         </p>
-        <h1 className="mt-4 font-display text-4xl">Order placed successfully</h1>
+        <h1 className="mt-4 font-display text-4xl">
+          {sessionId ? 'Payment completed successfully' : 'Order placed successfully'}
+        </h1>
         <p className="mt-4 text-sm leading-6 text-muted">
-          Your order has been sent to the kitchen. Staff can now manage the status from the admin dashboard.
+          {sessionId
+            ? 'Stripe confirmed your payment. The order is now recorded and marked paid for the admin team.'
+            : 'Your order has been sent to the kitchen. Staff can now manage the status from the admin dashboard.'}
         </p>
+        {loading ? (
+          <div className="mt-6 inline-flex items-center gap-2 rounded-[24px] border border-border bg-surface-strong px-5 py-4 text-sm text-muted">
+            <LoaderCircle size={16} className="animate-spin" />
+            Loading payment confirmation...
+          </div>
+        ) : null}
+        {error ? <p className="mt-4 text-sm text-red-500">{error}</p> : null}
         {orderId ? (
           <div className="mt-6 rounded-[24px] border border-border bg-surface-strong px-5 py-4 text-sm text-muted">
             Order ID: <span className="font-semibold text-text">{orderId}</span>
