@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { LoaderCircle } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import CategoryTabs from '../components/menu/CategoryTabs'
@@ -8,6 +9,22 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { fetchMenu } from '../services/menuService'
 import { useAuth } from '../context/useAuth'
+
+const initialLoaderMinDurationMs = 650
+
+function preloadImage(url) {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve()
+      return
+    }
+
+    const image = new Image()
+    image.onload = () => resolve()
+    image.onerror = () => resolve()
+    image.src = url
+  })
+}
 
 function Menu() {
   const { addToCart } = useCart()
@@ -22,9 +39,21 @@ function Menu() {
     let active = true
 
     async function loadMenu() {
+      const startedAt = Date.now()
+
       try {
         setLoading(true)
+        setError('')
         const items = await fetchMenu()
+        await Promise.allSettled(items.slice(0, 6).map((item) => preloadImage(item.image)))
+
+        const elapsed = Date.now() - startedAt
+        if (elapsed < initialLoaderMinDurationMs) {
+          await new Promise((resolve) =>
+            window.setTimeout(resolve, initialLoaderMinDurationMs - elapsed),
+          )
+        }
+
         if (!active) return
         setMenuItems(items)
       } catch (err) {
@@ -87,6 +116,34 @@ function Menu() {
 
   return (
     <AppShell>
+      {loading && !menuItems.length ? (
+        <section className="flex min-h-[calc(100vh-11rem)] items-center justify-center">
+          <div className="glass-panel grid-pattern relative w-full max-w-3xl overflow-hidden rounded-[36px] px-6 py-14 text-center sm:px-10 sm:py-16">
+            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+            <div className="mx-auto flex max-w-xl flex-col items-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.38em] text-secondary">
+                John Belvedere
+              </p>
+              <h1 className="mt-5 font-display text-4xl leading-tight sm:text-5xl">
+                Preparing the menu experience.
+              </h1>
+              <p className="mt-4 max-w-lg text-sm leading-6 text-muted sm:text-base">
+                Loading categories, featured dishes, and visuals so the menu opens cleanly instead of appearing in pieces.
+              </p>
+              <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-surface/80 px-5 py-3 text-sm font-semibold text-text shadow-soft">
+                <LoaderCircle size={18} className="animate-spin text-primary" />
+                Getting everything ready...
+              </div>
+              <div className="mt-8 h-2 w-full overflow-hidden rounded-full bg-surface-strong">
+                <div className="loader-sweep h-full w-1/3 rounded-full bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {!loading || menuItems.length ? (
+        <>
       <section>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -171,6 +228,8 @@ function Menu() {
           </div>
         )}
       </section>
+        </>
+      ) : null}
     </AppShell>
   )
 }

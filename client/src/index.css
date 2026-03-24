@@ -113,6 +113,24 @@ select {
     radial-gradient(circle at 50% 100%, rgba(239, 141, 74, 0.12), transparent 26%);
 }
 
+.loader-sweep {
+  animation: loader-sweep 1.2s ease-in-out infinite;
+}
+
+@keyframes loader-sweep {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  50% {
+    transform: translateX(120%);
+  }
+
+  100% {
+    transform: translateX(260%);
+  }
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

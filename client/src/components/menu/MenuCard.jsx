@@ -17,6 +17,8 @@ function MenuCard({ item, onAdd }) {
           <img
             src={item.image}
             alt={item.name}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition duration-500 hover:scale-105"
           />
         ) : (
