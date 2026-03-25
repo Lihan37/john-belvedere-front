@@ -6,7 +6,7 @@ import SectionHeading from '../components/common/SectionHeading'
 import CategoryTabs from '../components/menu/CategoryTabs'
 import MenuCard from '../components/menu/MenuCard'
 import { useCart } from '../context/CartContext'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/useToast'
 import { fetchMenu } from '../services/menuService'
 import { useAuth } from '../context/useAuth'
 

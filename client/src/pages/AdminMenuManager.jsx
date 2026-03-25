@@ -11,8 +11,8 @@ import {
   updateAdminMenuItem,
 } from '../services/adminMenuService'
 import { uploadMenuImage } from '../services/cloudinaryUploadService'
-import { currency } from '../utils/helpers'
-import { useToast } from '../context/ToastContext'
+import { currency, getCloudinaryImageUrl } from '../utils/helpers'
+import { useToast } from '../context/useToast'
 
 const initialForm = {
   name: '',
@@ -339,8 +339,14 @@ function AdminMenuManager() {
                   Uploaded image
                 </p>
                 <img
-                  src={form.image}
+                  src={getCloudinaryImageUrl(form.image, {
+                    width: 960,
+                    height: 720,
+                    crop: 'fill',
+                  })}
                   alt="Menu preview"
+                  loading="lazy"
+                  decoding="async"
                   className="h-48 w-full rounded-[18px] object-cover"
                 />
               </div>
@@ -402,8 +408,14 @@ function AdminMenuManager() {
                       >
                         {item.image ? (
                           <img
-                            src={item.image}
+                            src={getCloudinaryImageUrl(item.image, {
+                              width: 720,
+                              height: 480,
+                              crop: 'fill',
+                            })}
                             alt={item.name}
+                            loading="lazy"
+                            decoding="async"
                             className="mb-4 h-40 w-full rounded-[18px] object-cover"
                           />
                         ) : null}

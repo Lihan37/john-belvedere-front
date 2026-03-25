@@ -4,6 +4,7 @@ import { BarChart3, LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from '
 import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/useAuth'
+import { getCloudinaryImageUrl } from '../../utils/helpers'
 
 function AppShell({ children }) {
   const location = useLocation()
@@ -97,8 +98,15 @@ function AppShell({ children }) {
           <div className="flex items-center justify-between gap-3">
             <Link to="/menu" className="min-w-0" onClick={() => setMobileMenuOpen(false)}>
               <img
-                src="https://res.cloudinary.com/ddeorktvp/image/upload/v1773960493/Gemini_Generated_Image_oqdjszoqdjszoqdj-removebg-preview_ivzq9h.png"
+                src={getCloudinaryImageUrl('https://res.cloudinary.com/ddeorktvp/image/upload/v1773960493/Gemini_Generated_Image_oqdjszoqdjszoqdj-removebg-preview_ivzq9h.png', {
+                  width: 320,
+                  height: 120,
+                  crop: 'fit',
+                })}
                 alt="John Belvedere"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 className="h-14 w-auto object-contain sm:h-16"
               />
             </Link>

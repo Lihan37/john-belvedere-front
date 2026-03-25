@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import { useAuth } from '../context/useAuth'
@@ -10,6 +11,7 @@ function AdminLogin() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const redirectTo = location.state?.from?.pathname || '/admin/dashboard'
 
@@ -56,14 +58,24 @@ function AdminLogin() {
 
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Password</span>
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
-                placeholder="Enter admin password"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 pr-12 outline-none transition focus:border-primary"
+                  placeholder="Enter admin password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute inset-y-0 right-3 inline-flex items-center justify-center text-muted transition hover:text-text"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </label>
 
             {error ? <p className="text-sm text-red-500">{error}</p> : null}

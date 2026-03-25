@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import { useAuth } from '../context/useAuth'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/useToast'
 
 const initialRegister = {
   name: '',
@@ -27,6 +28,8 @@ function Login() {
   const [error, setError] = useState('')
   const [accountExistsModal, setAccountExistsModal] = useState(false)
   const [accountMissingWarning, setAccountMissingWarning] = useState(false)
+  const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
 
   const redirectTo = location.state?.from?.pathname || '/menu'
 
@@ -141,9 +144,13 @@ function Login() {
                 />
                 <Field
                   label="Password"
-                  type="password"
+                  type={showRegisterPassword ? 'text' : 'password'}
                   value={registerData.password}
                   onChange={(value) => setRegisterData((current) => ({ ...current, password: value }))}
+                  passwordToggle={{
+                    visible: showRegisterPassword,
+                    onToggle: () => setShowRegisterPassword((current) => !current),
+                  }}
                 />
               </>
             ) : (
@@ -155,9 +162,13 @@ function Login() {
                 />
                 <Field
                   label="Password"
-                  type="password"
+                  type={showLoginPassword ? 'text' : 'password'}
                   value={loginData.password}
                   onChange={(value) => setLoginData((current) => ({ ...current, password: value }))}
+                  passwordToggle={{
+                    visible: showLoginPassword,
+                    onToggle: () => setShowLoginPassword((current) => !current),
+                  }}
                 />
               </>
             )}
@@ -171,11 +182,6 @@ function Login() {
             >
               {loading ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Login'}
             </button>
-            {mode === 'login' ? (
-              <Link to="/forgot-password" className="inline-flex text-sm font-semibold text-primary">
-                Forgot password?
-              </Link>
-            ) : null}
           </form>
         </section>
       </div>
@@ -215,17 +221,31 @@ function Login() {
   )
 }
 
-function Field({ label, type = 'text', value, onChange, required = true }) {
+function Field({ label, type = 'text', value, onChange, required = true, passwordToggle = null }) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
-        required={required}
-      />
+      <div className="relative">
+        <input
+          type={type}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`w-full rounded-2xl border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary ${
+            passwordToggle ? 'pr-12' : ''
+          }`}
+          required={required}
+        />
+        {passwordToggle ? (
+          <button
+            type="button"
+            onClick={passwordToggle.onToggle}
+            className="absolute inset-y-0 right-3 inline-flex items-center justify-center text-muted transition hover:text-text"
+            aria-label={passwordToggle.visible ? 'Hide password' : 'Show password'}
+          >
+            {passwordToggle.visible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        ) : null}
+      </div>
     </label>
   )
 }

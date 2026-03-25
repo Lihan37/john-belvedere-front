@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
-import { currency } from '../../utils/helpers'
+import { currency, getCloudinaryImageUrl } from '../../utils/helpers'
 
 function MenuCard({ item, onAdd }) {
   const hasImage = Boolean(item.image)
@@ -15,10 +15,15 @@ function MenuCard({ item, onAdd }) {
       <div className="aspect-[4/3] overflow-hidden">
         {hasImage ? (
           <img
-            src={item.image}
+            src={getCloudinaryImageUrl(item.image, {
+              width: 720,
+              height: 540,
+              crop: 'fill',
+            })}
             alt={item.name}
             loading="lazy"
             decoding="async"
+            sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 33vw"
             className="h-full w-full object-cover transition duration-500 hover:scale-105"
           />
         ) : (

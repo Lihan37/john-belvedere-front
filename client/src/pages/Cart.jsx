@@ -6,7 +6,7 @@ import SectionHeading from '../components/common/SectionHeading'
 import CartItemRow from '../components/cart/CartItemRow'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/useAuth'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/useToast'
 import { createOrder, createStripeCheckout } from '../services/orderService'
 import { currency } from '../utils/helpers'
 

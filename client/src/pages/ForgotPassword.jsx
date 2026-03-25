@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import { requestPasswordReset, resetPassword } from '../services/authService'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/useToast'
 
 function ForgotPassword() {
   const { showToast } = useToast()

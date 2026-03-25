@@ -50,6 +50,31 @@ export const storage = {
 export const calculateCartTotal = (items) =>
   items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
+export function getCloudinaryImageUrl(
+  source,
+  {
+    width,
+    height,
+    crop = 'fill',
+    gravity = 'auto',
+    quality = 'auto',
+    format = 'auto',
+  } = {},
+) {
+  if (!source || typeof source !== 'string' || !source.includes('/image/upload/')) {
+    return source
+  }
+
+  const transforms = [`f_${format}`, `q_${quality}`]
+
+  if (width) transforms.push(`w_${width}`)
+  if (height) transforms.push(`h_${height}`)
+  if (crop) transforms.push(`c_${crop}`)
+  if (gravity && crop !== 'fit' && crop !== 'limit') transforms.push(`g_${gravity}`)
+
+  return source.replace('/image/upload/', `/image/upload/${transforms.join(',')}/`)
+}
+
 export function playNotificationSound() {
   if (typeof window === 'undefined') return
 
@@ -91,105 +116,139 @@ export function playNotificationSound() {
   }
 }
 
-export function downloadOrderVoucher(order, options = {}) {
+export async function downloadOrderVoucher(order, options = {}) {
   if (!order) return
 
+  const { jsPDF } = await import('jspdf')
   const title = options.title || APP_NAME
   const paymentMethod = order.paymentMethod === 'stripe' ? 'Stripe payment' : 'Counter cash'
   const paymentStatus = order.paymentStatus || 'unpaid'
-  const itemsMarkup = (order.items || [])
-    .map(
-      (item) => `
-        <tr>
-          <td>${item.name}</td>
-          <td>${item.quantity}</td>
-          <td>${currency(item.price)}</td>
-          <td>${currency(Number(item.price || 0) * Number(item.quantity || 0))}</td>
-        </tr>`,
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'pt',
+    format: 'a4',
+  })
+
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const pageHeight = pdf.internal.pageSize.getHeight()
+  const margin = 42
+  const contentWidth = pageWidth - margin * 2
+  const accent = [163, 63, 23]
+  const ink = [47, 34, 24]
+  const muted = [122, 101, 86]
+  let cursorY = margin
+
+  const ensureSpace = (requiredHeight = 40) => {
+    if (cursorY + requiredHeight <= pageHeight - margin) {
+      return
+    }
+
+    pdf.addPage()
+    cursorY = margin
+  }
+
+  pdf.setFillColor(255, 250, 243)
+  pdf.roundedRect(margin, margin, contentWidth, pageHeight - margin * 2, 24, 24, 'F')
+  pdf.setDrawColor(222, 207, 188)
+  pdf.roundedRect(margin, margin, contentWidth, pageHeight - margin * 2, 24, 24, 'S')
+
+  cursorY += 24
+
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(11)
+  pdf.setTextColor(...muted)
+  pdf.text(title.toUpperCase(), margin + 20, cursorY)
+
+  cursorY += 28
+  pdf.setFont('times', 'bold')
+  pdf.setFontSize(28)
+  pdf.setTextColor(...ink)
+  pdf.text('Order Voucher', margin + 20, cursorY)
+
+  cursorY += 22
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(11)
+  pdf.setTextColor(...muted)
+  pdf.text(`Order #${String(order._id).slice(0, 6)}`, margin + 20, cursorY)
+  cursorY += 16
+  pdf.text(formatOrderTime(order.createdAt), margin + 20, cursorY)
+
+  cursorY += 28
+  const summaryCards = [
+    ['Status', order.status || 'pending'],
+    ['Payment', paymentMethod],
+    ['Payment Status', paymentStatus],
+    ['Total', currency(order.totalPrice || 0)],
+  ]
+  const cardGap = 12
+  const cardWidth = (contentWidth - 40 - cardGap) / 2
+
+  summaryCards.forEach(([label, value], index) => {
+    const row = Math.floor(index / 2)
+    const column = index % 2
+    const x = margin + 20 + column * (cardWidth + cardGap)
+    const y = cursorY + row * 72
+    pdf.setFillColor(255, 255, 255)
+    pdf.roundedRect(x, y, cardWidth, 58, 16, 16, 'F')
+    pdf.setDrawColor(234, 223, 206)
+    pdf.roundedRect(x, y, cardWidth, 58, 16, 16, 'S')
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.setTextColor(...muted)
+    pdf.text(label.toUpperCase(), x + 14, y + 18)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(13)
+    pdf.setTextColor(...ink)
+    const valueLines = pdf.splitTextToSize(String(value), cardWidth - 28)
+    pdf.text(valueLines, x + 14, y + 38)
+  })
+
+  cursorY += 160
+  ensureSpace(90)
+
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(10)
+  pdf.setTextColor(...muted)
+  pdf.text('ITEM', margin + 20, cursorY)
+  pdf.text('QTY', margin + 250, cursorY)
+  pdf.text('PRICE', margin + 310, cursorY)
+  pdf.text('LINE TOTAL', margin + 400, cursorY)
+
+  cursorY += 14
+  pdf.setDrawColor(222, 207, 188)
+  pdf.line(margin + 20, cursorY, pageWidth - margin - 20, cursorY)
+  cursorY += 20
+
+  ;(order.items || []).forEach((item) => {
+    ensureSpace(54)
+
+    const itemLines = pdf.splitTextToSize(String(item.name || ''), 200)
+    const rowHeight = Math.max(34, itemLines.length * 14 + 10)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(11)
+    pdf.setTextColor(...ink)
+    pdf.text(itemLines, margin + 20, cursorY)
+    pdf.text(String(item.quantity || 0), margin + 250, cursorY)
+    pdf.text(currency(item.price || 0), margin + 310, cursorY)
+    pdf.text(
+      currency(Number(item.price || 0) * Number(item.quantity || 0)),
+      margin + 400,
+      cursorY,
     )
-    .join('')
+    cursorY += rowHeight
+    pdf.setDrawColor(234, 223, 206)
+    pdf.line(margin + 20, cursorY - 10, pageWidth - margin - 20, cursorY - 10)
+  })
 
-  const voucherHtml = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Voucher ${String(order._id).slice(0, 6)}</title>
-    <style>
-      body { font-family: Georgia, 'Times New Roman', serif; padding: 32px; color: #2f2218; background: #fffaf3; }
-      .sheet { max-width: 820px; margin: 0 auto; border: 1px solid #decfbc; border-radius: 24px; padding: 32px; background: white; }
-      .top { display: flex; justify-content: space-between; gap: 24px; align-items: start; }
-      .eyebrow { letter-spacing: .25em; text-transform: uppercase; font-size: 12px; color: #7a6556; margin: 0 0 12px; }
-      h1 { margin: 0; font-size: 40px; line-height: 1.05; }
-      .meta { margin-top: 12px; color: #68564a; }
-      .badges { display: flex; gap: 8px; flex-wrap: wrap; }
-      .badge { border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; background: #f4eadc; }
-      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
-      .card { border: 1px solid #eadfce; border-radius: 18px; padding: 16px; background: #fffaf5; }
-      .label { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .2em; color: #7a6556; }
-      .value { margin: 0; font-size: 18px; font-weight: 700; }
-      table { width: 100%; border-collapse: collapse; margin-top: 28px; }
-      th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid #eadfce; }
-      th { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #7a6556; }
-      .total { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 20px; border-top: 2px solid #decfbc; font-size: 22px; font-weight: 700; }
-    </style>
-  </head>
-  <body>
-    <div class="sheet">
-      <div class="top">
-        <div>
-          <p class="eyebrow">${title}</p>
-          <h1>Order Voucher</h1>
-          <p class="meta">Order #${String(order._id).slice(0, 6)}<br />${formatOrderTime(order.createdAt)}</p>
-        </div>
-        <div class="badges">
-          <span class="badge">${order.status}</span>
-          <span class="badge">${paymentMethod}</span>
-          <span class="badge">${paymentStatus}</span>
-        </div>
-      </div>
+  ensureSpace(70)
+  cursorY += 10
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(16)
+  pdf.setTextColor(...accent)
+  pdf.text('Grand Total', margin + 20, cursorY)
+  pdf.text(currency(order.totalPrice || 0), pageWidth - margin - 20, cursorY, {
+    align: 'right',
+  })
 
-      <div class="grid">
-        <div class="card">
-          <p class="label">Payment</p>
-          <p class="value">${paymentMethod}</p>
-        </div>
-        <div class="card">
-          <p class="label">Payment Status</p>
-          <p class="value">${paymentStatus}</p>
-        </div>
-        <div class="card">
-          <p class="label">Total</p>
-          <p class="value">${currency(order.totalPrice || 0)}</p>
-        </div>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Line Total</th>
-          </tr>
-        </thead>
-        <tbody>${itemsMarkup}</tbody>
-      </table>
-
-      <div class="total">
-        <span>Grand Total</span>
-        <span>${currency(order.totalPrice || 0)}</span>
-      </div>
-    </div>
-  </body>
-</html>`
-
-  const blob = new Blob([voucherHtml], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `voucher-${String(order._id).slice(0, 6)}.html`
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  pdf.save(`voucher-${String(order._id).slice(0, 6)}.pdf`)
 }

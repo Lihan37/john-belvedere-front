@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Mail, Phone, RefreshCw, Search, Shield, UserRound } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/useToast'
 import { fetchAdminUsers } from '../services/adminUsersService'
 
 function AdminUsers() {

@@ -1,10 +1,10 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useMemo, useState } from 'react'
 import { CheckCircle2, CircleAlert, Info, X } from 'lucide-react'
 
-const ToastContext = createContext(null)
+export const ToastContext = createContext(null)
 
 const toneStyles = {
-  success: 'border-emerald-500/45 bg-emerald-50 text-emerald-950 dark:bg-emerald-500/15 dark:text-emerald-100',
+  success: 'border-emerald-500/50 bg-[#eefaf2] text-[#16382d] dark:bg-emerald-500/15 dark:text-emerald-50',
   error: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300',
   info: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
 }
@@ -70,10 +70,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   )
-}
-
-export function useToast() {
-  const context = useContext(ToastContext)
-  if (!context) throw new Error('useToast must be used within ToastProvider')
-  return context
 }
