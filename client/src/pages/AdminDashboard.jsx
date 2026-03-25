@@ -6,7 +6,7 @@ import SectionHeading from '../components/common/SectionHeading'
 import OrderCard from '../components/admin/OrderCard'
 import { fetchOrders, updateOrderPaymentStatus, updateOrderStatus } from '../services/orderService'
 import { useAuth } from '../context/useAuth'
-import { useToast } from '../context/useToast'
+import { useToast } from '../context/ToastContext'
 import { playNotificationSound } from '../utils/helpers'
 
 const POLLING_INTERVAL_MS = 15000
@@ -302,7 +302,7 @@ function AdminDashboard() {
           ['Stripe payment', metrics.stripe],
           ['Counter', metrics.counter],
         ].map(([label, value]) => (
-          <div key={label} className="glass-panel rounded-[24px] p-4 sm:rounded-[28px] sm:p-5">
+          <div key={label} className="glass-panel rounded-3xl p-4 sm:rounded-[28px] sm:p-5">
             <p className="text-sm text-muted">{label}</p>
             <p className="mt-2 text-3xl font-semibold sm:text-4xl">{value}</p>
           </div>
