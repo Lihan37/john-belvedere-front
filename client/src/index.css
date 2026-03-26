@@ -138,3 +138,26 @@ select {
 .hide-scrollbar {
   scrollbar-width: none;
 }
+
+.category-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 68, 49, 0.42) transparent;
+}
+
+.category-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.category-scrollbar::-webkit-scrollbar-track {
+  background: rgba(103, 68, 49, 0.08);
+  border-radius: 999px;
+}
+
+.category-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(103, 68, 49, 0.34);
+  border-radius: 999px;
+}
+
+.category-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(103, 68, 49, 0.5);
+}

@@ -6,7 +6,7 @@ import SectionHeading from '../components/common/SectionHeading'
 import OrderCard from '../components/admin/OrderCard'
 import { fetchOrders, updateOrderPaymentStatus, updateOrderStatus } from '../services/orderService'
 import { useAuth } from '../context/useAuth'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/useToast'
 import { playNotificationSound } from '../utils/helpers'
 
 const POLLING_INTERVAL_MS = 15000

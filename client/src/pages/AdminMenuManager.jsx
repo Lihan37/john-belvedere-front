@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ImagePlus, Pencil, Plus, RefreshCw, Save, Trash2, Upload, X } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
+import CategoryTabs from '../components/menu/CategoryTabs'
 import {
   createAdminMenuItem,
   deleteAdminMenuItem,
@@ -11,7 +12,7 @@ import {
   updateAdminMenuItem,
 } from '../services/adminMenuService'
 import { uploadMenuImage } from '../services/cloudinaryUploadService'
-import { currency, getCloudinaryImageUrl } from '../utils/helpers'
+import { currency, getCloudinaryImageUrl, isDrinkCategory } from '../utils/helpers'
 import { useToast } from '../context/useToast'
 
 const initialForm = {
@@ -62,6 +63,9 @@ function AdminMenuManager() {
   const [error, setError] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
   const [confirmDeleteItem, setConfirmDeleteItem] = useState(null)
+  const [activeFoodJumpCategory, setActiveFoodJumpCategory] = useState('All')
+  const [activeDrinkJumpCategory, setActiveDrinkJumpCategory] = useState('All')
+  const sectionRefs = useRef({})
 
   const loadMenu = async ({ silent = false } = {}) => {
     try {
@@ -102,6 +106,16 @@ function AdminMenuManager() {
     [categories, menuItems],
   )
 
+  const foodGroups = useMemo(
+    () => groupedItems.filter((group) => !isDrinkCategory(group.category)),
+    [groupedItems],
+  )
+
+  const drinkGroups = useMemo(
+    () => groupedItems.filter((group) => isDrinkCategory(group.category)),
+    [groupedItems],
+  )
+
   const normalizedPayload = useMemo(() => normalizeMenuPayload(form), [form])
   const pendingUpdates = useMemo(
     () => (editingId ? getChangedMenuFields(normalizedPayload, editingItem) : normalizedPayload),
@@ -123,13 +137,16 @@ function AdminMenuManager() {
       description: item.description || '',
       image: item.image || '',
     })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const resetForm = () => {
     setEditingId('')
     setEditingItem(null)
     setForm(initialForm)
+  }
+
+  const closeEditModal = () => {
+    resetForm()
   }
 
   const handleSubmit = async (event) => {
@@ -236,13 +253,39 @@ function AdminMenuManager() {
     }
   }
 
+  const jumpToCategory = (category, type) => {
+    if (type === 'food') {
+      setActiveFoodJumpCategory(category)
+    } else {
+      setActiveDrinkJumpCategory(category)
+    }
+
+    if (category === 'All') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    const section = sectionRefs.current[category]
+    section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const foodJumpCategories = useMemo(
+    () => ['All', ...foodGroups.map((group) => group.category)],
+    [foodGroups],
+  )
+
+  const drinkJumpCategories = useMemo(
+    () => ['All', ...drinkGroups.map((group) => group.category)],
+    [drinkGroups],
+  )
+
   return (
     <AppShell>
       <section className="flex flex-wrap items-start justify-between gap-4">
         <SectionHeading
           eyebrow="Admin Menu"
-          title="Manage food items and categories"
-          description="Add new menu items, edit details later, and remove anything that should no longer appear to customers."
+          title="Manage food and drinks items"
+          description="Add, edit, and organize the customer menu across both food and drinks sections."
         />
         <div className="flex flex-wrap gap-2">
           <Link
@@ -269,22 +312,10 @@ function AdminMenuManager() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-                {editingId ? 'Edit Item' : 'New Item'}
+                New Item
               </p>
-              <h2 className="mt-3 font-display text-3xl">
-                {editingId ? 'Update menu item' : 'Add a new menu item'}
-              </h2>
+              <h2 className="mt-3 font-display text-3xl">Add a new menu item</h2>
             </div>
-            {editingId ? (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border transition hover:bg-surface-strong"
-                aria-label="Cancel edit"
-              >
-                <X size={18} />
-              </button>
-            ) : null}
           </div>
 
           <form className="mt-6 grid gap-4 lg:grid-cols-2" onSubmit={handleSubmit}>
@@ -360,11 +391,11 @@ function AdminMenuManager() {
 
             <button
               type="submit"
-              disabled={submitting || (editingId && !hasPendingChanges)}
+              disabled={submitting}
               className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-primary px-5 py-4 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60 lg:col-span-2"
             >
-              {editingId ? <Save size={16} /> : <Plus size={16} />}
-              {submitting ? 'Saving...' : editingId ? (hasPendingChanges ? 'Update item' : 'No changes yet') : 'Add item'}
+              <Plus size={16} />
+              {submitting ? 'Saving...' : 'Add item'}
             </button>
           </form>
         </div>
@@ -382,6 +413,32 @@ function AdminMenuManager() {
             </span>
           </div>
 
+          {!loading && foodGroups.length ? (
+            <div className="mt-6">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                Jump Through Food Menu
+              </p>
+              <CategoryTabs
+                categories={foodJumpCategories}
+                activeCategory={activeFoodJumpCategory}
+                onChange={(category) => jumpToCategory(category, 'food')}
+              />
+            </div>
+          ) : null}
+
+          {!loading && drinkGroups.length ? (
+            <div className="mt-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                Jump Through Drinks Menu
+              </p>
+              <CategoryTabs
+                categories={drinkJumpCategories}
+                activeCategory={activeDrinkJumpCategory}
+                onChange={(category) => jumpToCategory(category, 'drink')}
+              />
+            </div>
+          ) : null}
+
           {loading ? (
             <div className="mt-6 space-y-4">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -395,61 +452,80 @@ function AdminMenuManager() {
             </div>
           ) : (
             <div className="mt-6 space-y-5">
-              {groupedItems.map(({ category, items }) => (
-                <div key={category}>
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-                    {category}
-                  </p>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {items.map((item) => (
-                      <article
-                        key={item._id}
-                        className="flex h-full flex-col rounded-[24px] border border-border bg-surface-strong p-4"
+              {[
+                ['Food Menu', foodGroups],
+                ['Drinks Menu', drinkGroups],
+              ].map(([sectionTitle, groups]) =>
+                groups.length ? (
+                  <div key={sectionTitle} className="space-y-5">
+                    <div className="rounded-[24px] border border-border bg-surface-strong px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                        {sectionTitle}
+                      </p>
+                    </div>
+                    {groups.map(({ category, items }) => (
+                      <div
+                        key={category}
+                        ref={(element) => {
+                          sectionRefs.current[category] = element
+                        }}
                       >
-                        {item.image ? (
-                          <img
-                            src={getCloudinaryImageUrl(item.image, {
-                              width: 720,
-                              height: 480,
-                              crop: 'fill',
-                            })}
-                            alt={item.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="mb-4 h-40 w-full rounded-[18px] object-cover"
-                          />
-                        ) : null}
-                        <div className="flex items-start justify-between gap-3">
-                          <h3 className="font-display text-2xl leading-tight">{item.name}</h3>
-                          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
-                            {currency(item.price)}
-                          </span>
-                        </div>
-                        <p className="mt-3 flex-1 text-sm leading-6 text-muted">{item.description}</p>
-                        <div className="mt-4 flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(item)}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-surface"
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                          {category}
+                        </p>
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                          {items.map((item) => (
+                            <article
+                              key={item._id}
+                              className="flex h-full flex-col rounded-[24px] border border-border bg-surface-strong p-4"
                             >
-                              <Pencil size={15} />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteItem(item)}
-                              disabled={deletingId === item._id}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-text px-4 py-2.5 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              <Trash2 size={15} />
-                              {deletingId === item._id ? 'Deleting...' : 'Delete'}
-                            </button>
+                              {item.image ? (
+                                <img
+                                  src={getCloudinaryImageUrl(item.image, {
+                                    width: 720,
+                                    height: 480,
+                                    crop: 'fill',
+                                  })}
+                                  alt={item.name}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="mb-4 h-40 w-full rounded-[18px] object-cover"
+                                />
+                              ) : null}
+                              <div className="flex items-start justify-between gap-3">
+                                <h3 className="font-display text-2xl leading-tight">{item.name}</h3>
+                                <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+                                  {currency(item.price)}
+                                </span>
+                              </div>
+                              <p className="mt-3 flex-1 text-sm leading-6 text-muted">{item.description}</p>
+                              <div className="mt-4 flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEdit(item)}
+                                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-surface"
+                                  >
+                                    <Pencil size={15} />
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteItem(item)}
+                                    disabled={deletingId === item._id}
+                                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-text px-4 py-2.5 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    <Trash2 size={15} />
+                                    {deletingId === item._id ? 'Deleting...' : 'Delete'}
+                                  </button>
+                              </div>
+                            </article>
+                          ))}
                         </div>
-                      </article>
+                      </div>
                     ))}
                   </div>
-                </div>
-              ))}
+                ) : null,
+              )}
             </div>
           )}
         </div>
@@ -485,6 +561,127 @@ function AdminMenuManager() {
                       {deletingId === confirmDeleteItem._id ? 'Deleting...' : 'Delete item'}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {editingId
+        ? createPortal(
+            <div className="fixed inset-0 z-[110] bg-black/50">
+              <div className="flex min-h-screen items-start justify-center px-4 pb-6 pt-10 sm:items-center sm:pt-6">
+                <div className="glass-panel max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[30px] p-6 shadow-soft">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                        Edit Item
+                      </p>
+                      <h2 className="mt-3 font-display text-3xl">Update menu item</h2>
+                      <p className="mt-3 text-sm text-muted">
+                        Edit any field here and save changes without losing your position in the menu list.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={closeEditModal}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border transition hover:bg-surface-strong"
+                      aria-label="Close edit modal"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <form className="mt-6 grid gap-4 lg:grid-cols-2" onSubmit={handleSubmit}>
+                    <Field label="Food name" value={form.name} onChange={(value) => handleChange('name', value)} />
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+                      <Field label="Category" value={form.category} onChange={(value) => handleChange('category', value)} listId="menu-category-options" />
+                      <Field
+                        label="Price (AUD)"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={form.price}
+                        onChange={(value) => handleChange('price', value)}
+                      />
+                    </div>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold">Description</span>
+                      <textarea
+                        value={form.description}
+                        onChange={(event) => handleChange('description', event.target.value)}
+                        rows={4}
+                        className="w-full rounded-[22px] border border-border bg-transparent px-4 py-3 outline-none transition focus:border-primary"
+                        required
+                      />
+                    </label>
+                    <Field
+                      label="Image URL"
+                      type="url"
+                      required={false}
+                      value={form.image}
+                      onChange={(value) => handleChange('image', value)}
+                      placeholder="Optional for now. You can add it later."
+                    />
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold">Upload image</span>
+                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[22px] border border-dashed border-border bg-surface-strong px-4 py-4 text-sm font-semibold transition hover:bg-bg-strong">
+                        {uploadingImage ? <RefreshCw size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+                        {uploadingImage ? 'Uploading to Cloudinary...' : 'Choose file and upload'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                        />
+                      </label>
+                    </label>
+
+                    {form.image ? (
+                      <div className="rounded-[22px] border border-border bg-surface-strong p-3">
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-secondary">
+                          Uploaded image
+                        </p>
+                        <img
+                          src={getCloudinaryImageUrl(form.image, {
+                            width: 960,
+                            height: 720,
+                            crop: 'fill',
+                          })}
+                          alt="Menu preview"
+                          loading="lazy"
+                          decoding="async"
+                          className="h-48 w-full rounded-[18px] object-cover"
+                        />
+                      </div>
+                    ) : null}
+
+                    <datalist id="menu-category-options">
+                      {categories.map((category) => (
+                        <option key={category} value={category} />
+                      ))}
+                    </datalist>
+
+                    <div className="flex flex-col gap-3 lg:col-span-2 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={closeEditModal}
+                        className="inline-flex flex-1 items-center justify-center rounded-[22px] border border-border px-5 py-4 text-sm font-semibold transition hover:bg-surface-strong"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submitting || !hasPendingChanges}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-[22px] bg-primary px-5 py-4 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Save size={16} />
+                        {submitting ? 'Saving...' : hasPendingChanges ? 'Update item' : 'No changes yet'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>,

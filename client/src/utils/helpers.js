@@ -1,5 +1,20 @@
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'John Belvedere'
 
+export const DRINK_CATEGORIES = new Set([
+  'Sauces',
+  'Extras',
+  'Soft Drinks',
+  'Iced Tea',
+  'Shakes',
+  'Juices',
+  'Cocktails',
+  'Mocktails',
+  'Spirits Mixes & Shots',
+  'Beers',
+  'Bombs',
+  'House Wine',
+])
+
 export const currency = (value) =>
   new Intl.NumberFormat('en-AU', {
     style: 'currency',
@@ -49,6 +64,8 @@ export const storage = {
 
 export const calculateCartTotal = (items) =>
   items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+export const isDrinkCategory = (category = '') => DRINK_CATEGORIES.has(category)
 
 export function getCloudinaryImageUrl(
   source,

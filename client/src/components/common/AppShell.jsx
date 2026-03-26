@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BarChart3, LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from 'lucide-react'
+import { ArrowUp, BarChart3, LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/useAuth'
@@ -12,13 +12,31 @@ function AppShell({ children }) {
   const { isAdmin, isAuthenticated, logout, user } = useAuth()
   const [theme, setTheme] = useState(() => localStorage.getItem('jb_theme') || 'light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showScrollTop, setShowScrollTop] = useState(false)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
     localStorage.setItem('jb_theme', theme)
   }, [theme])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 320)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
   const showBottomCartButton = !isAdmin
+
+  const handleScrollTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const customerAccountAction = !isAdmin && isAuthenticated ? (
     <NavLink
@@ -153,8 +171,19 @@ function AppShell({ children }) {
         <main className={`flex-1 ${showBottomCartButton ? 'pb-24' : ''}`}>{children}</main>
       </div>
 
-      {showBottomCartButton ? (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-40">
+      <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3">
+        {showScrollTop ? (
+          <button
+            type="button"
+            onClick={handleScrollTop}
+            className="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface text-text shadow-soft transition hover:bg-surface-strong"
+            aria-label="Go to top"
+          >
+            <ArrowUp size={18} />
+          </button>
+        ) : null}
+
+        {showBottomCartButton ? (
           <NavLink
             to="/cart"
             className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-primary px-5 py-4 text-sm font-semibold text-[#fff8ef] shadow-soft transition hover:bg-primary-strong"
@@ -169,8 +198,8 @@ function AppShell({ children }) {
               {itemCount}
             </span>
           </NavLink>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   )
 }

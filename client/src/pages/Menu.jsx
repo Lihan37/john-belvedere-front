@@ -9,6 +9,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/useToast'
 import { fetchMenu } from '../services/menuService'
 import { useAuth } from '../context/useAuth'
+import { isDrinkCategory } from '../utils/helpers'
 
 const initialLoaderMinDurationMs = 650
 
@@ -31,7 +32,8 @@ function Menu() {
   const { user } = useAuth()
   const { showToast } = useToast()
   const [menuItems, setMenuItems] = useState([])
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [activeFoodCategory, setActiveFoodCategory] = useState('All')
+  const [activeDrinkCategory, setActiveDrinkCategory] = useState('All')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -70,16 +72,31 @@ function Menu() {
     }
   }, [])
 
-  const categories = useMemo(() => {
-    const values = Array.from(new Set(menuItems.map((item) => item.category)))
-    return ['All', ...values]
-  }, [menuItems])
+  const foodItems = useMemo(
+    () => menuItems.filter((item) => !isDrinkCategory(item.category)),
+    [menuItems],
+  )
 
-  const visibleItems = useMemo(() => {
+  const drinkItems = useMemo(
+    () => menuItems.filter((item) => isDrinkCategory(item.category)),
+    [menuItems],
+  )
+
+  const foodCategories = useMemo(() => {
+    const values = Array.from(new Set(foodItems.map((item) => item.category)))
+    return ['All', ...values]
+  }, [foodItems])
+
+  const drinkCategories = useMemo(() => {
+    const values = Array.from(new Set(drinkItems.map((item) => item.category)))
+    return ['All', ...values]
+  }, [drinkItems])
+
+  const visibleFoodItems = useMemo(() => {
     const scopedItems =
-      activeCategory === 'All'
-        ? menuItems
-        : menuItems.filter((item) => item.category === activeCategory)
+      activeFoodCategory === 'All'
+        ? foodItems
+        : foodItems.filter((item) => item.category === activeFoodCategory)
 
     return [...scopedItems].sort((left, right) => {
       if (left.category !== right.category) {
@@ -88,21 +105,50 @@ function Menu() {
 
       return Number(left.price) - Number(right.price)
     })
-  }, [activeCategory, menuItems])
+  }, [activeFoodCategory, foodItems])
 
-  const groupedVisibleItems = useMemo(() => {
-    if (activeCategory !== 'All') {
+  const groupedVisibleFoodItems = useMemo(() => {
+    if (activeFoodCategory !== 'All') {
       return []
     }
 
-    return categories
+    return foodCategories
       .filter((category) => category !== 'All')
       .map((category) => ({
         category,
-        items: visibleItems.filter((item) => item.category === category),
+        items: visibleFoodItems.filter((item) => item.category === category),
       }))
       .filter((group) => group.items.length > 0)
-  }, [activeCategory, categories, visibleItems])
+  }, [activeFoodCategory, foodCategories, visibleFoodItems])
+
+  const visibleDrinkItems = useMemo(() => {
+    const scopedItems =
+      activeDrinkCategory === 'All'
+        ? drinkItems
+        : drinkItems.filter((item) => item.category === activeDrinkCategory)
+
+    return [...scopedItems].sort((left, right) => {
+      if (left.category !== right.category) {
+        return left.category.localeCompare(right.category)
+      }
+
+      return Number(left.price) - Number(right.price)
+    })
+  }, [activeDrinkCategory, drinkItems])
+
+  const groupedVisibleDrinkItems = useMemo(() => {
+    if (activeDrinkCategory !== 'All') {
+      return []
+    }
+
+    return drinkCategories
+      .filter((category) => category !== 'All')
+      .map((category) => ({
+        category,
+        items: visibleDrinkItems.filter((item) => item.category === category),
+      }))
+      .filter((group) => group.items.length > 0)
+  }, [activeDrinkCategory, drinkCategories, visibleDrinkItems])
 
   const handleAddToCart = (item) => {
     addToCart(item)
@@ -182,12 +228,29 @@ function Menu() {
               description="Category-based browsing with quick add actions."
             />
           </div>
-          <div className="mt-5">
-            <CategoryTabs
-              categories={categories}
-              activeCategory={activeCategory}
-              onChange={setActiveCategory}
-            />
+          <div className="mt-5 space-y-4">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                Food Categories
+              </p>
+              <CategoryTabs
+                categories={foodCategories}
+                activeCategory={activeFoodCategory}
+                onChange={setActiveFoodCategory}
+              />
+            </div>
+            {!loading && drinkItems.length ? (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                  Drinks Categories
+                </p>
+                <CategoryTabs
+                  categories={drinkCategories}
+                  activeCategory={activeDrinkCategory}
+                  onChange={setActiveDrinkCategory}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -202,9 +265,9 @@ function Menu() {
           </div>
         ) : error ? (
           <div className="glass-panel rounded-[28px] p-6 text-sm text-red-500">{error}</div>
-        ) : activeCategory === 'All' ? (
+        ) : activeFoodCategory === 'All' ? (
           <div className="space-y-10">
-            {groupedVisibleItems.map((group) => (
+            {groupedVisibleFoodItems.map((group) => (
               <section key={group.category}>
                 <div className="mb-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
@@ -222,12 +285,52 @@ function Menu() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {visibleItems.map((item) => (
+            {visibleFoodItems.map((item) => (
               <MenuCard key={item._id} item={item} onAdd={handleAddToCart} />
             ))}
           </div>
         )}
       </section>
+
+      {!loading && drinkItems.length ? (
+        <section className="mt-12">
+          <div className="mb-6">
+            <div className="max-w-xl">
+              <SectionHeading
+                eyebrow="Drinks Menu"
+                title="Something to sip with the table"
+                description="Browse drinks, shakes, cocktails, and extras separately from the food menu."
+              />
+            </div>
+          </div>
+
+          {activeDrinkCategory === 'All' ? (
+            <div className="space-y-10">
+              {groupedVisibleDrinkItems.map((group) => (
+                <section key={group.category}>
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                      Category
+                    </p>
+                    <h3 className="mt-2 font-display text-3xl">{group.category}</h3>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {group.items.map((item) => (
+                      <MenuCard key={item._id} item={item} onAdd={handleAddToCart} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visibleDrinkItems.map((item) => (
+                <MenuCard key={item._id} item={item} onAdd={handleAddToCart} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
         </>
       ) : null}
     </AppShell>
