@@ -14,8 +14,10 @@ import { useToast } from '../context/useToast'
 import {
   clearAdminOrderAlertCount,
   formatDateInput,
-  incrementAdminOrderAlertCount,
+  getAdminOrderLastSeenAt,
   playNotificationSound,
+  setAdminOrderAlertCount,
+  setAdminOrderLastSeenAt,
 } from '../utils/helpers'
 
 const POLLING_INTERVAL_MS = 15000
@@ -52,6 +54,23 @@ function AdminDashboard() {
       const nextOrders = response.orders || []
       const nextOrderIds = new Set(nextOrders.map((order) => order._id))
       const isSelectedDateToday = selectedDate === formatDateInput()
+      const lastSeenAt = getAdminOrderLastSeenAt()
+      const unseenOrders = isSelectedDateToday
+        ? nextOrders.filter((order) => {
+            if (!lastSeenAt) return true
+            return new Date(order.createdAt) > new Date(lastSeenAt)
+          })
+        : []
+
+      if (!silent && isSelectedDateToday && unseenOrders.length) {
+        const latestOrder = unseenOrders[0]
+        setNewOrderAlert({
+          count: unseenOrders.length,
+          orderId: String(latestOrder._id).slice(0, 6),
+          createdAt: latestOrder.createdAt,
+        })
+        playNotificationSound()
+      }
 
       if (silent && isSelectedDateToday && knownOrderIdsRef.current) {
         const newOrders = nextOrders.filter((order) => !knownOrderIdsRef.current.has(order._id))
@@ -63,7 +82,6 @@ function AdminDashboard() {
             orderId: String(latestOrder._id).slice(0, 6),
             createdAt: latestOrder.createdAt,
           })
-          incrementAdminOrderAlertCount(newOrders.length)
           playNotificationSound()
           showToast({
             tone: 'info',
@@ -75,6 +93,14 @@ function AdminDashboard() {
             duration: 5000,
           })
         }
+      }
+
+      if (isSelectedDateToday && nextOrders.length) {
+        setAdminOrderLastSeenAt(nextOrders[0].createdAt)
+      }
+
+      if (isSelectedDateToday) {
+        setAdminOrderAlertCount(0)
       }
 
       setOrders(nextOrders)

@@ -1,6 +1,7 @@
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'John Belvedere'
 const ADMIN_ORDER_ALERT_COUNT_KEY = 'jb_admin_order_alert_count'
 const ADMIN_ORDER_ALERT_EVENT = 'jb-admin-order-alert-count'
+const ADMIN_ORDER_LAST_SEEN_KEY = 'jb_admin_last_seen_order_at'
 
 let notificationAudioContext = null
 let notificationAudioPrepared = false
@@ -152,6 +153,10 @@ function setAdminOrderAlertCountValue(count) {
   emitAdminOrderAlertCount(Math.max(0, count))
 }
 
+export function setAdminOrderAlertCount(count) {
+  setAdminOrderAlertCountValue(count)
+}
+
 export function getAdminOrderAlertCount() {
   if (typeof window === 'undefined') return 0
   const rawValue = Number(window.localStorage.getItem(ADMIN_ORDER_ALERT_COUNT_KEY) || 0)
@@ -164,6 +169,22 @@ export function incrementAdminOrderAlertCount(amount = 1) {
 
 export function clearAdminOrderAlertCount() {
   setAdminOrderAlertCountValue(0)
+}
+
+export function getAdminOrderLastSeenAt() {
+  if (typeof window === 'undefined') return ''
+  return window.localStorage.getItem(ADMIN_ORDER_LAST_SEEN_KEY) || ''
+}
+
+export function setAdminOrderLastSeenAt(value) {
+  if (typeof window === 'undefined') return
+
+  if (!value) {
+    window.localStorage.removeItem(ADMIN_ORDER_LAST_SEEN_KEY)
+    return
+  }
+
+  window.localStorage.setItem(ADMIN_ORDER_LAST_SEEN_KEY, value)
 }
 
 export function getAdminOrderAlertEventName() {

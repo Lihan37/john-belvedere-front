@@ -7,9 +7,14 @@ import { useAuth } from '../../context/useAuth'
 import {
   getAdminOrderAlertCount,
   getAdminOrderAlertEventName,
+  getAdminOrderLastSeenAt,
   getCloudinaryImageUrl,
   prepareNotificationAudio,
+  setAdminOrderAlertCount,
 } from '../../utils/helpers'
+import { fetchDailyOrderReport } from '../../services/orderService'
+
+const ADMIN_BADGE_POLLING_INTERVAL_MS = 15000
 
 function AppShell({ children }) {
   const location = useLocation()
@@ -55,6 +60,43 @@ function AppShell({ children }) {
       window.removeEventListener(eventName, handleAlertCountChange)
     }
   }, [isAdmin])
+
+  useEffect(() => {
+    if (!isAdmin) return
+
+    let active = true
+    const isDashboardPage = location.pathname === '/admin/dashboard'
+
+    const syncAdminOrderBadge = async () => {
+      if (isDashboardPage) {
+        setAdminOrderAlertCount(0)
+        return
+      }
+
+      try {
+        const response = await fetchDailyOrderReport()
+        if (!active) return
+
+        const lastSeenAt = getAdminOrderLastSeenAt()
+        const unseenCount = (response.orders || []).filter((order) => {
+          if (!lastSeenAt) return true
+          return new Date(order.createdAt) > new Date(lastSeenAt)
+        }).length
+
+        setAdminOrderAlertCount(unseenCount)
+      } catch {
+        // Ignore badge polling failures here; dashboard handles detailed errors.
+      }
+    }
+
+    syncAdminOrderBadge()
+    const intervalId = window.setInterval(syncAdminOrderBadge, ADMIN_BADGE_POLLING_INTERVAL_MS)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+    }
+  }, [isAdmin, location.pathname])
 
   const showBottomCartButton = !isAdmin
 
