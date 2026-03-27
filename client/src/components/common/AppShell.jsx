@@ -4,7 +4,12 @@ import { ArrowUp, BarChart3, LayoutDashboard, LogOut, Menu, ShoppingBag, User, X
 import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/useAuth'
-import { getCloudinaryImageUrl } from '../../utils/helpers'
+import {
+  getAdminOrderAlertCount,
+  getAdminOrderAlertEventName,
+  getCloudinaryImageUrl,
+  prepareNotificationAudio,
+} from '../../utils/helpers'
 
 function AppShell({ children }) {
   const location = useLocation()
@@ -13,6 +18,7 @@ function AppShell({ children }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('jb_theme') || 'light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [adminOrderAlertCount, setAdminOrderAlertCount] = useState(() => getAdminOrderAlertCount())
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -31,6 +37,24 @@ function AppShell({ children }) {
       window.removeEventListener('scroll', handleScroll)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isAdmin) return
+
+    prepareNotificationAudio()
+    setAdminOrderAlertCount(getAdminOrderAlertCount())
+
+    const eventName = getAdminOrderAlertEventName()
+    const handleAlertCountChange = (event) => {
+      const nextCount = Number(event.detail?.count ?? getAdminOrderAlertCount())
+      setAdminOrderAlertCount(Number.isFinite(nextCount) ? Math.max(0, nextCount) : 0)
+    }
+
+    window.addEventListener(eventName, handleAlertCountChange)
+    return () => {
+      window.removeEventListener(eventName, handleAlertCountChange)
+    }
+  }, [isAdmin])
 
   const showBottomCartButton = !isAdmin
 
@@ -77,10 +101,15 @@ function AppShell({ children }) {
       <NavLink
         to="/admin/dashboard"
         onClick={() => setMobileMenuOpen(false)}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-surface-strong"
+        className="relative inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-surface-strong"
       >
         <LayoutDashboard size={16} />
         Dashboard
+        {adminOrderAlertCount ? (
+          <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold leading-none text-bg-strong shadow-soft">
+            {adminOrderAlertCount > 9 ? '9+' : adminOrderAlertCount}
+          </span>
+        ) : null}
       </NavLink>
       <NavLink
         to="/admin/reports"

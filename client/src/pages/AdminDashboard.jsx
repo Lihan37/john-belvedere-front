@@ -4,10 +4,19 @@ import { Link } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
 import OrderCard from '../components/admin/OrderCard'
-import { fetchOrders, updateOrderPaymentStatus, updateOrderStatus } from '../services/orderService'
+import {
+  fetchDailyOrderReport,
+  updateOrderPaymentStatus,
+  updateOrderStatus,
+} from '../services/orderService'
 import { useAuth } from '../context/useAuth'
 import { useToast } from '../context/useToast'
-import { playNotificationSound } from '../utils/helpers'
+import {
+  clearAdminOrderAlertCount,
+  formatDateInput,
+  incrementAdminOrderAlertCount,
+  playNotificationSound,
+} from '../utils/helpers'
 
 const POLLING_INTERVAL_MS = 15000
 
@@ -28,6 +37,7 @@ function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
+  const [selectedDate, setSelectedDate] = useState(() => formatDateInput())
   const knownOrderIdsRef = useRef(null)
 
   const loadOrders = async ({ silent = false } = {}) => {
@@ -38,11 +48,13 @@ function AdminDashboard() {
         setLoading(true)
       }
       setError('')
-      const response = await fetchOrders()
-      const nextOrderIds = new Set(response.map((order) => order._id))
+      const response = await fetchDailyOrderReport(selectedDate)
+      const nextOrders = response.orders || []
+      const nextOrderIds = new Set(nextOrders.map((order) => order._id))
+      const isSelectedDateToday = selectedDate === formatDateInput()
 
-      if (silent && knownOrderIdsRef.current) {
-        const newOrders = response.filter((order) => !knownOrderIdsRef.current.has(order._id))
+      if (silent && isSelectedDateToday && knownOrderIdsRef.current) {
+        const newOrders = nextOrders.filter((order) => !knownOrderIdsRef.current.has(order._id))
 
         if (newOrders.length) {
           const latestOrder = newOrders[0]
@@ -51,6 +63,7 @@ function AdminDashboard() {
             orderId: String(latestOrder._id).slice(0, 6),
             createdAt: latestOrder.createdAt,
           })
+          incrementAdminOrderAlertCount(newOrders.length)
           playNotificationSound()
           showToast({
             tone: 'info',
@@ -64,7 +77,7 @@ function AdminDashboard() {
         }
       }
 
-      setOrders(response)
+      setOrders(nextOrders)
       knownOrderIdsRef.current = nextOrderIds
       setLastUpdated(new Date())
     } catch (err) {
@@ -88,6 +101,7 @@ function AdminDashboard() {
   useEffect(() => {
     let active = true
 
+    knownOrderIdsRef.current = null
     loadOrders()
 
     const intervalId = window.setInterval(async () => {
@@ -108,7 +122,7 @@ function AdminDashboard() {
       window.clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [showToast])
+  }, [selectedDate, showToast])
 
   const metrics = useMemo(
     () => ({
@@ -209,7 +223,7 @@ function AdminDashboard() {
         <SectionHeading
           eyebrow="Admin Dashboard"
           title="Kitchen and floor order management"
-          description="Monitor table activity, track order status, and prepare for future real-time event updates."
+          description="Review one day at a time, track order progress, and go back to earlier dates whenever you need to audit past service."
         />
         <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap">
           <Link
@@ -283,7 +297,10 @@ function AdminDashboard() {
             </div>
             <button
               type="button"
-              onClick={() => setNewOrderAlert(null)}
+              onClick={() => {
+                setNewOrderAlert(null)
+                clearAdminOrderAlertCount()
+              }}
               className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong"
             >
               <X size={16} />
@@ -311,7 +328,13 @@ function AdminDashboard() {
 
       {error ? <p className="mt-6 text-sm text-red-500">{error}</p> : null}
 
-      <section className="mt-6 grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+      <section className="mt-6 grid gap-3 xl:grid-cols-[0.9fr_1.2fr_0.8fr_0.8fr_0.8fr]">
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+          className="rounded-[20px] border border-border bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary"
+        />
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}

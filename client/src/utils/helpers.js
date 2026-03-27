@@ -1,4 +1,10 @@
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'John Belvedere'
+const ADMIN_ORDER_ALERT_COUNT_KEY = 'jb_admin_order_alert_count'
+const ADMIN_ORDER_ALERT_EVENT = 'jb-admin-order-alert-count'
+
+let notificationAudioContext = null
+let notificationAudioPrepared = false
+let notificationAudioUnlockBound = false
 
 export const DRINK_CATEGORIES = new Set([
   'Soft Drinks',
@@ -93,27 +99,31 @@ export function getCloudinaryImageUrl(
 export function playNotificationSound() {
   if (typeof window === 'undefined') return
 
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext
-  if (!AudioContextClass) return
-
   try {
-    const audioContext = new AudioContextClass()
+    const audioContext = getNotificationAudioContext()
+    if (!audioContext) return
+
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {})
+    }
+
     const now = audioContext.currentTime
     const tones = [
-      { frequency: 880, start: 0, duration: 0.22 },
-      { frequency: 660, start: 0.24, duration: 0.22 },
-      { frequency: 990, start: 0.5, duration: 0.3 },
+      { frequency: 932, start: 0, duration: 0.24, gain: 0.11 },
+      { frequency: 740, start: 0.26, duration: 0.24, gain: 0.1 },
+      { frequency: 1046, start: 0.56, duration: 0.34, gain: 0.12 },
+      { frequency: 880, start: 0.94, duration: 0.42, gain: 0.1 },
     ]
 
-    tones.forEach(({ frequency, start, duration }) => {
+    tones.forEach(({ frequency, start, duration, gain }) => {
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 
-      oscillator.type = 'sine'
+      oscillator.type = 'triangle'
       oscillator.frequency.setValueAtTime(frequency, now + start)
 
       gainNode.gain.setValueAtTime(0.0001, now + start)
-      gainNode.gain.exponentialRampToValueAtTime(0.16, now + start + 0.03)
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + start + 0.04)
       gainNode.gain.exponentialRampToValueAtTime(0.0001, now + start + duration)
 
       oscillator.connect(gainNode)
@@ -122,13 +132,74 @@ export function playNotificationSound() {
       oscillator.start(now + start)
       oscillator.stop(now + start + duration)
     })
-
-    window.setTimeout(() => {
-      audioContext.close().catch(() => {})
-    }, 1200)
   } catch {
     // Ignore autoplay or audio initialization failures.
   }
+}
+
+function emitAdminOrderAlertCount(count) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(
+    new CustomEvent(ADMIN_ORDER_ALERT_EVENT, {
+      detail: { count },
+    }),
+  )
+}
+
+function setAdminOrderAlertCountValue(count) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(ADMIN_ORDER_ALERT_COUNT_KEY, String(Math.max(0, count)))
+  emitAdminOrderAlertCount(Math.max(0, count))
+}
+
+export function getAdminOrderAlertCount() {
+  if (typeof window === 'undefined') return 0
+  const rawValue = Number(window.localStorage.getItem(ADMIN_ORDER_ALERT_COUNT_KEY) || 0)
+  return Number.isFinite(rawValue) ? Math.max(0, rawValue) : 0
+}
+
+export function incrementAdminOrderAlertCount(amount = 1) {
+  setAdminOrderAlertCountValue(getAdminOrderAlertCount() + amount)
+}
+
+export function clearAdminOrderAlertCount() {
+  setAdminOrderAlertCountValue(0)
+}
+
+export function getAdminOrderAlertEventName() {
+  return ADMIN_ORDER_ALERT_EVENT
+}
+
+export function prepareNotificationAudio() {
+  if (typeof window === 'undefined' || notificationAudioPrepared) return
+
+  getNotificationAudioContext()
+  notificationAudioPrepared = true
+
+  if (notificationAudioUnlockBound) return
+  notificationAudioUnlockBound = true
+
+  const unlockAudio = () => {
+    const audioContext = getNotificationAudioContext()
+    if (audioContext?.state === 'suspended') {
+      audioContext.resume().catch(() => {})
+    }
+  }
+
+  window.addEventListener('pointerdown', unlockAudio, { passive: true })
+  window.addEventListener('keydown', unlockAudio)
+  window.addEventListener('touchstart', unlockAudio, { passive: true })
+}
+
+function getNotificationAudioContext() {
+  if (typeof window === 'undefined') return null
+  if (notificationAudioContext) return notificationAudioContext
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextClass) return null
+
+  notificationAudioContext = new AudioContextClass()
+  return notificationAudioContext
 }
 
 export async function downloadOrderVoucher(order, options = {}) {

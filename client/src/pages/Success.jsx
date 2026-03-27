@@ -89,6 +89,12 @@ function Success() {
         ) : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
+            to="/account"
+            className="rounded-full border border-secondary/20 bg-secondary/8 px-5 py-3 text-sm font-semibold text-secondary transition hover:bg-secondary/12"
+          >
+            Track order
+          </Link>
+          <Link
             to="/menu"
             className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-bg-strong transition hover:bg-primary-strong"
           >
