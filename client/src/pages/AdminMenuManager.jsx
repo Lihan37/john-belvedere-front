@@ -302,6 +302,26 @@ function AdminMenuManager() {
     [activeDrinkJumpCategory, drinkGroups],
   )
 
+  const renderedMenuSections = useMemo(() => {
+    if (activeFoodJumpCategory !== 'All') {
+      return [['Food Menu', visibleFoodGroups]]
+    }
+
+    if (activeDrinkJumpCategory !== 'All') {
+      return [['Drinks Menu', visibleDrinkGroups]]
+    }
+
+    return [
+      ['Food Menu', visibleFoodGroups],
+      ['Drinks Menu', visibleDrinkGroups],
+    ]
+  }, [
+    activeDrinkJumpCategory,
+    activeFoodJumpCategory,
+    visibleDrinkGroups,
+    visibleFoodGroups,
+  ])
+
   return (
     <AppShell>
       <section className="flex flex-wrap items-start justify-between gap-4">
@@ -475,10 +495,7 @@ function AdminMenuManager() {
             </div>
           ) : (
             <div className="mt-6 space-y-5">
-              {[ 
-                ['Food Menu', visibleFoodGroups],
-                ['Drinks Menu', visibleDrinkGroups],
-              ].map(([sectionTitle, groups]) =>
+              {renderedMenuSections.map(([sectionTitle, groups]) =>
                 groups.length ? (
                   <div key={sectionTitle} className="space-y-5">
                     <div className="rounded-[24px] border border-border bg-surface-strong px-5 py-4">
