@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { LoaderCircle } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
@@ -36,6 +36,8 @@ function Menu() {
   const [activeDrinkCategory, setActiveDrinkCategory] = useState('All')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const foodSectionRef = useRef(null)
+  const drinksSectionRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -160,6 +162,26 @@ function Menu() {
     })
   }
 
+  const handleFoodCategoryChange = (category) => {
+    setActiveFoodCategory(category)
+    if (category !== 'All') {
+      setActiveDrinkCategory('All')
+    }
+    window.requestAnimationFrame(() => {
+      foodSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  const handleDrinkCategoryChange = (category) => {
+    setActiveDrinkCategory(category)
+    if (category !== 'All') {
+      setActiveFoodCategory('All')
+    }
+    window.requestAnimationFrame(() => {
+      drinksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   return (
     <AppShell>
       {loading && !menuItems.length ? (
@@ -219,7 +241,7 @@ function Menu() {
         </motion.div>
       </section>
 
-      <section className="mt-8">
+      <section ref={foodSectionRef} className="mt-8">
         <div className="mb-6">
           <div className="max-w-xl">
             <SectionHeading
@@ -236,7 +258,7 @@ function Menu() {
               <CategoryTabs
                 categories={foodCategories}
                 activeCategory={activeFoodCategory}
-                onChange={setActiveFoodCategory}
+                onChange={handleFoodCategoryChange}
               />
             </div>
             {!loading && drinkItems.length ? (
@@ -247,7 +269,7 @@ function Menu() {
                 <CategoryTabs
                   categories={drinkCategories}
                   activeCategory={activeDrinkCategory}
-                  onChange={setActiveDrinkCategory}
+                  onChange={handleDrinkCategoryChange}
                 />
               </div>
             ) : null}
@@ -265,6 +287,20 @@ function Menu() {
           </div>
         ) : error ? (
           <div className="glass-panel rounded-[28px] p-6 text-sm text-red-500">{error}</div>
+        ) : activeDrinkCategory !== 'All' ? (
+          <div>
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                Category
+              </p>
+              <h3 className="mt-2 font-display text-3xl">{activeDrinkCategory}</h3>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visibleDrinkItems.map((item) => (
+                <MenuCard key={item._id} item={item} onAdd={handleAddToCart} />
+              ))}
+            </div>
+          </div>
         ) : activeFoodCategory === 'All' ? (
           <div className="space-y-10">
             {groupedVisibleFoodItems.map((group) => (
@@ -292,8 +328,8 @@ function Menu() {
         )}
       </section>
 
-      {!loading && drinkItems.length ? (
-        <section className="mt-12">
+      {!loading && drinkItems.length && activeFoodCategory === 'All' && activeDrinkCategory === 'All' ? (
+        <section ref={drinksSectionRef} className="mt-12">
           <div className="mb-6">
             <div className="max-w-xl">
               <SectionHeading

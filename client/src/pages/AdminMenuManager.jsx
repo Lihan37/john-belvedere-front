@@ -66,6 +66,7 @@ function AdminMenuManager() {
   const [activeFoodJumpCategory, setActiveFoodJumpCategory] = useState('All')
   const [activeDrinkJumpCategory, setActiveDrinkJumpCategory] = useState('All')
   const sectionRefs = useRef({})
+  const fullMenuSectionRef = useRef(null)
 
   const loadMenu = async ({ silent = false } = {}) => {
     try {
@@ -256,12 +257,18 @@ function AdminMenuManager() {
   const jumpToCategory = (category, type) => {
     if (type === 'food') {
       setActiveFoodJumpCategory(category)
+      if (category !== 'All') {
+        setActiveDrinkJumpCategory('All')
+      }
     } else {
       setActiveDrinkJumpCategory(category)
+      if (category !== 'All') {
+        setActiveFoodJumpCategory('All')
+      }
     }
 
     if (category === 'All') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      fullMenuSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
 
@@ -277,6 +284,22 @@ function AdminMenuManager() {
   const drinkJumpCategories = useMemo(
     () => ['All', ...drinkGroups.map((group) => group.category)],
     [drinkGroups],
+  )
+
+  const visibleFoodGroups = useMemo(
+    () =>
+      activeFoodJumpCategory === 'All'
+        ? foodGroups
+        : foodGroups.filter((group) => group.category === activeFoodJumpCategory),
+    [activeFoodJumpCategory, foodGroups],
+  )
+
+  const visibleDrinkGroups = useMemo(
+    () =>
+      activeDrinkJumpCategory === 'All'
+        ? drinkGroups
+        : drinkGroups.filter((group) => group.category === activeDrinkJumpCategory),
+    [activeDrinkJumpCategory, drinkGroups],
   )
 
   return (
@@ -400,7 +423,7 @@ function AdminMenuManager() {
           </form>
         </div>
 
-        <div className="mt-6 glass-panel rounded-[30px] p-6">
+        <div ref={fullMenuSectionRef} className="mt-6 glass-panel rounded-[30px] p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
@@ -452,9 +475,9 @@ function AdminMenuManager() {
             </div>
           ) : (
             <div className="mt-6 space-y-5">
-              {[
-                ['Food Menu', foodGroups],
-                ['Drinks Menu', drinkGroups],
+              {[ 
+                ['Food Menu', visibleFoodGroups],
+                ['Drinks Menu', visibleDrinkGroups],
               ].map(([sectionTitle, groups]) =>
                 groups.length ? (
                   <div key={sectionTitle} className="space-y-5">

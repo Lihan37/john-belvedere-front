@@ -1,8 +1,6 @@
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'John Belvedere'
 
 export const DRINK_CATEGORIES = new Set([
-  'Sauces',
-  'Extras',
   'Soft Drinks',
   'Iced Tea',
   'Shakes',
