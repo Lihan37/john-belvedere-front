@@ -252,7 +252,7 @@ function Menu() {
           </div>
           <div className="mt-5 space-y-4">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.42em] text-secondary/85">
                 Food Categories
               </p>
               <CategoryTabs
@@ -263,7 +263,7 @@ function Menu() {
             </div>
             {!loading && drinkItems.length ? (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.42em] text-secondary/85">
                   Drinks Categories
                 </p>
                 <CategoryTabs

@@ -458,7 +458,7 @@ function AdminMenuManager() {
 
           {!loading && foodGroups.length ? (
             <div className="mt-6">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.42em] text-secondary/85">
                 Jump Through Food Menu
               </p>
               <CategoryTabs
@@ -471,7 +471,7 @@ function AdminMenuManager() {
 
           {!loading && drinkGroups.length ? (
             <div className="mt-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.42em] text-secondary/85">
                 Jump Through Drinks Menu
               </p>
               <CategoryTabs

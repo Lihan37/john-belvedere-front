@@ -4,11 +4,11 @@ function CategoryTabs({ categories, activeCategory, onChange }) {
   const scrollRef = useRef(null)
 
   return (
-    <div className="glass-panel rounded-[28px] p-2">
+    <div className="category-tabs-shell glass-panel rounded-[30px] p-2.5">
       <div className="flex items-center">
         <div
           ref={scrollRef}
-          className="category-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto scroll-smooth pb-2"
+          className="category-scrollbar flex min-w-0 flex-1 gap-2.5 overflow-x-auto scroll-smooth px-1 pb-2"
         >
           {categories.map((category) => {
             const active = category === activeCategory
@@ -17,10 +17,10 @@ function CategoryTabs({ categories, activeCategory, onChange }) {
                 key={category}
                 type="button"
                 onClick={() => onChange(category)}
-                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                className={`category-tab shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
                   active
-                    ? 'border-primary bg-primary text-bg-strong shadow-soft'
-                    : 'border-border bg-surface-strong text-text hover:border-secondary/30 hover:bg-bg-strong'
+                    ? 'category-tab-active border-primary text-bg-strong shadow-soft'
+                    : 'border-border bg-surface-strong/95 text-text hover:border-secondary/20 hover:bg-bg-strong hover:text-primary'
                 }`}
               >
                 {category}
