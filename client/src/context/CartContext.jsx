@@ -1,15 +1,31 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { calculateCartTotal, storage } from '../utils/helpers'
+import { useAuth } from './useAuth'
 
 const CartContext = createContext(null)
-const storageKey = 'jb_cart'
+const guestStorageKey = 'jb_cart_guest'
+
+function getCartStorageKey(user) {
+  if (!user) return guestStorageKey
+
+  const identity = user._id || user.email || user.phone
+  return identity ? `jb_cart_${identity}` : guestStorageKey
+}
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(() => storage.get(storageKey, []))
+  const { authReady, user } = useAuth()
+  const storageKey = useMemo(() => getCartStorageKey(user), [user])
+  const [items, setItems] = useState([])
 
   useEffect(() => {
+    if (!authReady) return
+    setItems(storage.get(storageKey, []))
+  }, [authReady, storageKey])
+
+  useEffect(() => {
+    if (!authReady) return
     storage.set(storageKey, items)
-  }, [items])
+  }, [authReady, items, storageKey])
 
   const addToCart = (menuItem) => {
     setItems((current) => {
