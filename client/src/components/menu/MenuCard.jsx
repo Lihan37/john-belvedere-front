@@ -12,19 +12,19 @@ function MenuCard({ item, onAdd }) {
       transition={{ duration: 0.35 }}
       className="glass-panel flex h-full flex-col overflow-hidden rounded-[28px]"
     >
-      <div className="aspect-[4/3] overflow-hidden">
+      <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-bg-strong via-surface-strong to-bg">
         {hasImage ? (
           <img
             src={getCloudinaryImageUrl(item.image, {
               width: 720,
               height: 540,
-              crop: 'fill',
+              crop: 'fit',
             })}
             alt={item.name}
             loading="lazy"
             decoding="async"
             sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 33vw"
-            className="h-full w-full object-cover transition duration-500 hover:scale-105"
+            className="h-full w-full object-contain p-4 transition duration-300 hover:scale-[1.02]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-bg-strong via-surface-strong to-bg text-center">

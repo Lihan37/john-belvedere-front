@@ -416,12 +416,12 @@ function AdminMenuManager() {
                   src={getCloudinaryImageUrl(form.image, {
                     width: 960,
                     height: 720,
-                    crop: 'fill',
+                    crop: 'fit',
                   })}
                   alt="Menu preview"
                   loading="lazy"
                   decoding="async"
-                  className="h-48 w-full rounded-[18px] object-cover"
+                  className="h-48 w-full rounded-[18px] bg-gradient-to-br from-bg-strong via-surface-strong to-bg object-contain p-3"
                 />
               </div>
             ) : null}
@@ -524,12 +524,12 @@ function AdminMenuManager() {
                                   src={getCloudinaryImageUrl(item.image, {
                                     width: 720,
                                     height: 480,
-                                    crop: 'fill',
+                                    crop: 'fit',
                                   })}
                                   alt={item.name}
                                   loading="lazy"
                                   decoding="async"
-                                  className="mb-4 h-40 w-full rounded-[18px] object-cover"
+                                  className="mb-4 h-40 w-full rounded-[18px] bg-gradient-to-br from-bg-strong via-surface-strong to-bg object-contain p-3"
                                 />
                               ) : null}
                               <div className="flex items-start justify-between gap-3">
@@ -688,12 +688,12 @@ function AdminMenuManager() {
                           src={getCloudinaryImageUrl(form.image, {
                             width: 960,
                             height: 720,
-                            crop: 'fill',
+                            crop: 'fit',
                           })}
                           alt="Menu preview"
                           loading="lazy"
                           decoding="async"
-                          className="h-48 w-full rounded-[18px] object-cover"
+                          className="h-48 w-full rounded-[18px] bg-gradient-to-br from-bg-strong via-surface-strong to-bg object-contain p-3"
                         />
                       </div>
                     ) : null}

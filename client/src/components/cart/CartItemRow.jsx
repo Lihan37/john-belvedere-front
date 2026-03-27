@@ -4,17 +4,19 @@ import { currency, getCloudinaryImageUrl } from '../../utils/helpers'
 function CartItemRow({ item, onUpdate, onRemove }) {
   return (
     <div className="glass-panel flex gap-4 rounded-[24px] p-4">
-      <img
-        src={getCloudinaryImageUrl(item.image, {
-          width: 240,
-          height: 240,
-          crop: 'fill',
-        })}
-        alt={item.name}
-        loading="lazy"
-        decoding="async"
-        className="h-24 w-24 rounded-2xl object-cover"
-      />
+      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-bg-strong via-surface-strong to-bg p-2">
+        <img
+          src={getCloudinaryImageUrl(item.image, {
+            width: 240,
+            height: 240,
+            crop: 'fit',
+          })}
+          alt={item.name}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-contain"
+        />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
         <div>
           <div className="flex items-start justify-between gap-4">
