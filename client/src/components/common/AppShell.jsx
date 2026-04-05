@@ -5,6 +5,7 @@ import ThemeToggle from './ThemeToggle'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/useAuth'
 import {
+  BRAND_IMAGE_URL,
   getAdminOrderAlertCount,
   getAdminOrderAlertEventName,
   getAdminOrderLastSeenAt,
@@ -187,7 +188,7 @@ function AppShell({ children }) {
           <div className="flex items-center justify-between gap-3">
             <Link to="/menu" className="min-w-0" onClick={() => setMobileMenuOpen(false)}>
               <img
-                src={getCloudinaryImageUrl('https://res.cloudinary.com/ddeorktvp/image/upload/v1773960493/Gemini_Generated_Image_oqdjszoqdjszoqdj-removebg-preview_ivzq9h.png', {
+                src={getCloudinaryImageUrl(BRAND_IMAGE_URL, {
                   width: 320,
                   height: 120,
                   crop: 'fit',
