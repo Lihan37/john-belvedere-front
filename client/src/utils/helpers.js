@@ -1,6 +1,4 @@
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'John Belvedere'
-export const BRAND_IMAGE_URL =
-  'https://res.cloudinary.com/ddeorktvp/image/upload/v1775386977/jv_dp_bki4eq.jpg'
 const ADMIN_ORDER_ALERT_COUNT_KEY = 'jb_admin_order_alert_count'
 const ADMIN_ORDER_ALERT_EVENT = 'jb-admin-order-alert-count'
 const ADMIN_ORDER_LAST_SEEN_KEY = 'jb_admin_last_seen_order_at'
