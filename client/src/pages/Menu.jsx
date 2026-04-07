@@ -34,6 +34,7 @@ function Menu() {
   const [menuItems, setMenuItems] = useState([])
   const [activeFoodCategory, setActiveFoodCategory] = useState('All')
   const [activeDrinkCategory, setActiveDrinkCategory] = useState('All')
+  const [activeMenuView, setActiveMenuView] = useState('food')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const foodSectionRef = useRef(null)
@@ -163,6 +164,7 @@ function Menu() {
   }
 
   const handleFoodCategoryChange = (category) => {
+    setActiveMenuView('food')
     setActiveFoodCategory(category)
     if (category !== 'All') {
       setActiveDrinkCategory('All')
@@ -173,12 +175,13 @@ function Menu() {
   }
 
   const handleDrinkCategoryChange = (category) => {
+    setActiveMenuView('drink')
     setActiveDrinkCategory(category)
     if (category !== 'All') {
       setActiveFoodCategory('All')
     }
     window.requestAnimationFrame(() => {
-      drinksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      foodSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }
 
@@ -287,13 +290,15 @@ function Menu() {
           </div>
         ) : error ? (
           <div className="glass-panel rounded-[28px] p-6 text-sm text-red-500">{error}</div>
-        ) : activeDrinkCategory !== 'All' ? (
+        ) : activeMenuView === 'drink' ? (
           <div>
             <div className="mb-4">
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-                Category
+                {activeDrinkCategory === 'All' ? 'Drinks Menu' : 'Category'}
               </p>
-              <h3 className="mt-2 font-display text-3xl">{activeDrinkCategory}</h3>
+              <h3 className="mt-2 font-display text-3xl">
+                {activeDrinkCategory === 'All' ? 'All Drinks' : activeDrinkCategory}
+              </h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {visibleDrinkItems.map((item) => (
@@ -328,7 +333,11 @@ function Menu() {
         )}
       </section>
 
-      {!loading && drinkItems.length && activeFoodCategory === 'All' && activeDrinkCategory === 'All' ? (
+      {!loading &&
+      drinkItems.length &&
+      activeMenuView === 'food' &&
+      activeFoodCategory === 'All' &&
+      activeDrinkCategory === 'All' ? (
         <section ref={drinksSectionRef} className="mt-12">
           <div className="mb-6">
             <div className="max-w-xl">

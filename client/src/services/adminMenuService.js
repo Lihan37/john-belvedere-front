@@ -1,7 +1,7 @@
 import { api } from './api'
 
 export async function fetchAdminMenuItems() {
-  const response = await api.get('/menu')
+  const response = await api.get('/menu/admin')
   return response.data || response
 }
 

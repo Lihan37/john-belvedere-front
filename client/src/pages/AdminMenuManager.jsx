@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { ImagePlus, Pencil, Plus, RefreshCw, Save, Trash2, Upload, X } from 'lucide-react'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
@@ -57,6 +58,7 @@ function AdminMenuManager() {
   const [refreshing, setRefreshing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState('')
+  const [togglingId, setTogglingId] = useState('')
   const [editingId, setEditingId] = useState('')
   const [editingItem, setEditingItem] = useState(null)
   const [form, setForm] = useState(initialForm)
@@ -65,8 +67,8 @@ function AdminMenuManager() {
   const [confirmDeleteItem, setConfirmDeleteItem] = useState(null)
   const [activeFoodJumpCategory, setActiveFoodJumpCategory] = useState('All')
   const [activeDrinkJumpCategory, setActiveDrinkJumpCategory] = useState('All')
-  const sectionRefs = useRef({})
   const fullMenuSectionRef = useRef(null)
+  const shouldScrollAfterFilterRef = useRef(false)
 
   const loadMenu = async ({ silent = false } = {}) => {
     try {
@@ -92,6 +94,27 @@ function AdminMenuManager() {
   useEffect(() => {
     loadMenu()
   }, [])
+
+  useEffect(() => {
+    if (!shouldScrollAfterFilterRef.current) {
+      return
+    }
+
+    shouldScrollAfterFilterRef.current = false
+    const target = fullMenuSectionRef.current
+
+    if (!target) {
+      return
+    }
+
+    window.requestAnimationFrame(() => {
+      const top = window.scrollY + target.getBoundingClientRect().top - 96
+      window.scrollTo({
+        top: Math.max(top, 0),
+        behavior: 'smooth',
+      })
+    })
+  }, [activeDrinkJumpCategory, activeFoodJumpCategory])
 
   const categories = useMemo(
     () => Array.from(new Set(menuItems.map((item) => item.category))).sort((left, right) => left.localeCompare(right)),
@@ -225,6 +248,33 @@ function AdminMenuManager() {
     }
   }
 
+  const handleAvailabilityToggle = async (item) => {
+    const nextAvailability = !item.isAvailable
+
+    try {
+      setTogglingId(item._id)
+      setError('')
+      const updated = await updateAdminMenuItem(item._id, { isAvailable: nextAvailability })
+      setMenuItems((current) => current.map((entry) => (entry._id === item._id ? updated : entry)))
+      showToast({
+        tone: 'success',
+        title: nextAvailability ? 'Menu item available' : 'Menu item unavailable',
+        message: nextAvailability
+          ? `${item.name} will show again on the customer menu.`
+          : `${item.name} is now hidden from the customer menu.`,
+      })
+    } catch (err) {
+      setError(err.message)
+      showToast({
+        tone: 'error',
+        title: 'Availability update failed',
+        message: err.message,
+      })
+    } finally {
+      setTogglingId('')
+    }
+  }
+
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]
     if (!file) {
@@ -255,6 +305,8 @@ function AdminMenuManager() {
   }
 
   const jumpToCategory = (category, type) => {
+    shouldScrollAfterFilterRef.current = true
+
     if (type === 'food') {
       setActiveFoodJumpCategory(category)
       if (category !== 'All') {
@@ -268,12 +320,8 @@ function AdminMenuManager() {
     }
 
     if (category === 'All') {
-      fullMenuSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
-
-    const section = sectionRefs.current[category]
-    section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const foodJumpCategories = useMemo(
@@ -321,6 +369,13 @@ function AdminMenuManager() {
     visibleDrinkGroups,
     visibleFoodGroups,
   ])
+
+  const availableCount = useMemo(
+    () => menuItems.filter((item) => item.isAvailable !== false).length,
+    [menuItems],
+  )
+
+  const unavailableCount = menuItems.length - availableCount
 
   return (
     <AppShell>
@@ -452,7 +507,7 @@ function AdminMenuManager() {
               <h2 className="mt-3 font-display text-3xl">All menu items</h2>
             </div>
             <span className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted">
-              {menuItems.length} items
+              {menuItems.length} items - {unavailableCount} unavailable
             </span>
           </div>
 
@@ -494,7 +549,13 @@ function AdminMenuManager() {
               <p className="mt-3 text-sm text-muted">Create your first item from the form.</p>
             </div>
           ) : (
-            <div className="mt-6 space-y-5">
+            <motion.div
+              key={`${activeFoodJumpCategory}-${activeDrinkJumpCategory}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+              className="mt-6 space-y-5"
+            >
               {renderedMenuSections.map(([sectionTitle, groups]) =>
                 groups.length ? (
                   <div key={sectionTitle} className="space-y-5">
@@ -504,12 +565,7 @@ function AdminMenuManager() {
                       </p>
                     </div>
                     {groups.map(({ category, items }) => (
-                      <div
-                        key={category}
-                        ref={(element) => {
-                          sectionRefs.current[category] = element
-                        }}
-                      >
+                      <div key={category}>
                         <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
                           {category}
                         </p>
@@ -534,12 +590,24 @@ function AdminMenuManager() {
                               ) : null}
                               <div className="flex items-start justify-between gap-3">
                                 <h3 className="font-display text-2xl leading-tight">{item.name}</h3>
-                                <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
-                                  {currency(item.price)}
-                                </span>
+                                <div className="flex shrink-0 flex-col items-end gap-2">
+                                  <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+                                    {currency(item.price)}
+                                  </span>
+                                  <span
+                                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                      item.isAvailable === false
+                                        ? 'bg-red-500/10 text-red-600'
+                                        : 'bg-emerald-500/10 text-emerald-700'
+                                    }`}
+                                  >
+                                    {item.isAvailable === false ? 'Unavailable' : 'Available'}
+                                  </span>
+                                </div>
                               </div>
                               <p className="mt-3 flex-1 text-sm leading-6 text-muted">{item.description}</p>
-                              <div className="mt-4 flex gap-2">
+                              <div className="mt-4 space-y-2.5">
+                                <div className="flex gap-2">
                                   <button
                                     type="button"
                                     onClick={() => handleEdit(item)}
@@ -557,6 +625,24 @@ function AdminMenuManager() {
                                     <Trash2 size={15} />
                                     {deletingId === item._id ? 'Deleting...' : 'Delete'}
                                   </button>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAvailabilityToggle(item)}
+                                  disabled={togglingId === item._id}
+                                  className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                    item.isAvailable === false
+                                      ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15'
+                                      : 'border border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/15'
+                                  }`}
+                                >
+                                  <RefreshCw size={15} className={togglingId === item._id ? 'animate-spin' : ''} />
+                                  {togglingId === item._id
+                                    ? 'Updating...'
+                                    : item.isAvailable === false
+                                      ? 'Make available'
+                                      : 'Make unavailable'}
+                                </button>
                               </div>
                             </article>
                           ))}
@@ -566,7 +652,7 @@ function AdminMenuManager() {
                   </div>
                 ) : null,
               )}
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
