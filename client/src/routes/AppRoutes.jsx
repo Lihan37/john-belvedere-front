@@ -3,6 +3,7 @@ import Menu from '../pages/Menu'
 import Cart from '../pages/Cart'
 import Login from '../pages/Login'
 import Success from '../pages/Success'
+import CounterOrder from '../pages/CounterOrder'
 import AdminLogin from '../pages/AdminLogin'
 import AdminDashboard from '../pages/AdminDashboard'
 import AdminMenuManager from '../pages/AdminMenuManager'
@@ -20,6 +21,7 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/menu" replace />} />
         <Route path="/menu" element={<Menu />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/counter" element={<CounterOrder />} />
         <Route path="/login" element={<Login />} />
         <Route
           path="/account"

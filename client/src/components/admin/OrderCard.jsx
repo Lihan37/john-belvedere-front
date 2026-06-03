@@ -38,6 +38,14 @@ function OrderCard({
           </p>
           <h3 className="mt-2 font-display text-xl sm:text-2xl">Order #{order._id.slice(0, 6)}</h3>
           <p className="mt-2 text-sm text-muted">{formatOrderTime(order.createdAt)}</p>
+          <p className="mt-1 text-sm font-semibold">
+            {order.customerName || 'Guest'}
+            {order.source === 'counter-screen' ? (
+              <span className="ml-2 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-primary">
+                No-login counter
+              </span>
+            ) : null}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${statusStyles[order.status]}`}>

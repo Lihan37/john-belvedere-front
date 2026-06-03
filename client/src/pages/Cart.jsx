@@ -7,7 +7,7 @@ import CartItemRow from '../components/cart/CartItemRow'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/useAuth'
 import { useToast } from '../context/useToast'
-import { createOrder, createStripeCheckout } from '../services/orderService'
+import { createCounterOrder, createOrder, createStripeCheckout } from '../services/orderService'
 import { currency } from '../utils/helpers'
 
 function Cart() {
@@ -17,6 +17,7 @@ function Cart() {
   const { user, isAuthenticated } = useAuth()
   const { showToast } = useToast()
   const [paymentMethod, setPaymentMethod] = useState('counter')
+  const [guestName, setGuestName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -70,6 +71,48 @@ function Cart() {
     }
   }
 
+  const handleGuestCounterOrder = async () => {
+    if (!items.length) return
+
+    const customerName = guestName.trim()
+    if (!customerName) {
+      setError('Customer name is required for counter orders.')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      setError('')
+      const order = await createCounterOrder({
+        customerName,
+        items: items.map(({ _id, name, price, quantity }) => ({
+          menuItemId: _id,
+          name,
+          price,
+          quantity,
+        })),
+        totalPrice: total,
+      })
+
+      clearCart()
+      setGuestName('')
+      showToast({
+        tone: 'success',
+        title: 'Counter order placed',
+        message: `Order #${String(order._id).slice(0, 6)} was sent to admin.`,
+      })
+      navigate('/success', {
+        state: {
+          orderId: order._id,
+        },
+      })
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <AppShell>
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -77,7 +120,7 @@ function Cart() {
           <SectionHeading
             eyebrow="Your Cart"
             title="Review your table order before sending it."
-            description="Quantity controls and order summary are ready for quick dine-in checkout."
+            description="Table orders require customer login. Counter-screen orders can be placed separately with only a customer name."
             action={
               <Link
                 to="/menu"
@@ -113,20 +156,22 @@ function Cart() {
             Order Summary
           </p>
           <div className="mt-4 rounded-[24px] border border-border bg-surface-strong p-5">
-            <p className="text-sm font-semibold">Payment method</p>
+            <p className="text-sm font-semibold">
+              {isAuthenticated ? 'Payment method' : 'Login required for table checkout'}
+            </p>
             <div className="mt-4 grid gap-3">
               {[
                 {
                   id: 'counter',
                   label: 'Cash at counter',
-                  description: 'Pay in person at the restaurant counter.',
+                  description: 'For logged-in table orders. Staff marks it paid at the counter.',
                   icon: HandCoins,
                   available: true,
                 },
                 {
                   id: 'stripe',
                   label: 'Stripe',
-                  description: 'Pay online with Stripe Checkout in test mode.',
+                  description: 'For logged-in table orders with online card payment.',
                   icon: CreditCard,
                   available: true,
                 },
@@ -137,11 +182,12 @@ function Cart() {
                     key={id}
                     type="button"
                     onClick={() => setPaymentMethod(id)}
+                    disabled={!isAuthenticated}
                     className={`rounded-[22px] border p-4 text-left transition ${
                       active
                         ? 'border-primary bg-primary/8'
                         : 'border-border hover:bg-surface'
-                    }`}
+                    } ${!isAuthenticated ? 'cursor-not-allowed opacity-65' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
@@ -169,6 +215,34 @@ function Cart() {
             </div>
           </div>
 
+          {!isAuthenticated ? (
+            <div className="mt-5 rounded-[24px] border border-primary/30 bg-primary/8 p-5">
+              <p className="text-sm font-semibold">Guest counter order</p>
+              <p className="mt-2 text-xs leading-5 text-muted">
+                For counter orders, enter the customer name and send the selected food directly to admin.
+              </p>
+              <label className="mt-4 block">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-secondary">
+                  Customer name
+                </span>
+                <input
+                  value={guestName}
+                  onChange={(event) => setGuestName(event.target.value)}
+                  placeholder="Enter customer name"
+                  className="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm outline-none transition focus:border-primary"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleGuestCounterOrder}
+                disabled={!items.length || submitting}
+                className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-text px-5 py-4 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? 'Sending counter order...' : 'Place counter order'}
+              </button>
+            </div>
+          ) : null}
+
           <div className="mt-5 space-y-3 rounded-[24px] border border-border bg-surface-strong p-5">
             <div className="flex items-center justify-between text-sm text-muted">
               <span>Subtotal</span>
@@ -194,7 +268,7 @@ function Cart() {
                 ? paymentMethod === 'counter'
                   ? 'Counter payment is active now. The order is created immediately and stays unpaid until staff marks it paid.'
                   : 'Stripe will redirect you to Checkout. After successful payment, the order is confirmed and marked paid automatically.'
-                : 'Login is required before checkout. You can still review your cart first.'}
+                : 'Table checkout requires login. Counter orders can be sent here with the customer name.'}
             </p>
           </div>
 

@@ -30,6 +30,26 @@ export async function createOrder(payload, token) {
   }
 }
 
+export async function createCounterOrder(payload) {
+  try {
+    const response = await api.post('/orders/counter', payload)
+    return response.data || response
+  } catch (error) {
+    if (!useMocks) throw error
+    const nextOrder = {
+      _id: crypto.randomUUID(),
+      ...payload,
+      paymentMethod: 'counter',
+      paymentStatus: 'unpaid',
+      source: 'counter-screen',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    }
+    storage.set(storageKey, [nextOrder, ...getMockOrders()])
+    return nextOrder
+  }
+}
+
 export async function createStripeCheckout(payload) {
   const response = await api.post('/orders/checkout/stripe', payload)
   return response.data || response
@@ -113,6 +133,8 @@ export async function fetchDailyOrderReport(date) {
         accumulator.byStatus[order.status] = (accumulator.byStatus[order.status] || 0) + 1
         accumulator.byPaymentMethod[paymentMethod] =
           (accumulator.byPaymentMethod[paymentMethod] || 0) + 1
+        accumulator.bySource[order.source || 'standard'] =
+          (accumulator.bySource[order.source || 'standard'] || 0) + 1
 
         if (paymentStatus === 'paid') {
           accumulator.paidOrders += 1
@@ -133,6 +155,7 @@ export async function fetchDailyOrderReport(date) {
         unpaidAmount: 0,
         byStatus: { pending: 0, preparing: 0, served: 0 },
         byPaymentMethod: { counter: 0, stripe: 0 },
+        bySource: { standard: 0, 'counter-screen': 0 },
       },
     )
 

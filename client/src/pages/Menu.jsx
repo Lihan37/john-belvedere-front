@@ -224,20 +224,20 @@ function Menu() {
           <div className="mx-auto flex max-w-3xl flex-col items-center">
             <div className="flex flex-wrap items-center justify-center gap-3">
               <span className="rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                Scan. Order. Enjoy.
+                Scan. Login. Order.
               </span>
               <span className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-secondary">
                 Dine-in ordering
               </span>
             </div>
             <SectionHeading
-              title="Browse and order fast."
-              description="A simple QR ordering flow built for quick menu access and smooth checkout."
+              title="Browse the table menu fast."
+              description="Guests can browse first. Login is required before sending a table order."
             />
             <div className="mx-auto mt-5 w-full max-w-sm rounded-[22px] border border-border bg-surface-strong p-4 text-center">
-              <p className="text-sm text-muted">Signed in</p>
+              <p className="text-sm text-muted">{user ? 'Signed in' : 'Table checkout'}</p>
               <p className="mt-2 text-base font-semibold">
-                {user ? user.name || user.email || user.phone : 'Guest browsing'}
+                {user ? user.name || user.email || user.phone : 'Login required to order'}
               </p>
             </div>
           </div>

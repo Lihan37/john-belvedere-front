@@ -16,7 +16,7 @@ import { fetchDailyOrderReport } from '../../services/orderService'
 
 const ADMIN_BADGE_POLLING_INTERVAL_MS = 15000
 
-function AppShell({ children }) {
+function AppShell({ children, hideCartButton = false }) {
   const location = useLocation()
   const { itemCount } = useCart()
   const { isAdmin, isAuthenticated, logout, user } = useAuth()
@@ -98,7 +98,7 @@ function AppShell({ children }) {
     }
   }, [isAdmin, location.pathname])
 
-  const showBottomCartButton = !isAdmin
+  const showBottomCartButton = !isAdmin && !hideCartButton
 
   const handleScrollTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -162,7 +162,7 @@ function AppShell({ children }) {
         Reports
       </NavLink>
     </>
-  ) : (
+  ) : hideCartButton ? null : (
     <NavLink
       to="/cart"
       onClick={() => setMobileMenuOpen(false)}

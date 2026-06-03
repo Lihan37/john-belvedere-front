@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BarChart3, BellRing, LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed, X } from 'lucide-react'
+import { BarChart3, BellRing, ClipboardList, LoaderCircle, LogOut, RefreshCw, Users, UtensilsCrossed, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/common/AppShell'
 import SectionHeading from '../components/common/SectionHeading'
@@ -158,6 +158,7 @@ function AdminDashboard() {
       served: orders.filter((order) => order.status === 'served').length,
       stripe: orders.filter((order) => order.paymentMethod === 'stripe').length,
       counter: orders.filter((order) => (order.paymentMethod || 'counter') === 'counter').length,
+      counterScreen: orders.filter((order) => order.source === 'counter-screen').length,
     }),
     [orders],
   )
@@ -229,6 +230,8 @@ function AdminDashboard() {
         const haystack = [
           String(order._id).slice(0, 6),
           paymentMethod,
+          order.customerName,
+          order.source === 'counter-screen' ? 'no login counter screen' : '',
           ...(order.items || []).map((item) => item.name),
         ]
           .join(' ')
@@ -252,6 +255,13 @@ function AdminDashboard() {
           description="Review one day at a time, track order progress, and go back to earlier dates whenever you need to audit past service."
         />
         <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap">
+          <Link
+            to="/counter"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong xl:w-auto"
+          >
+            <ClipboardList size={16} />
+            Counter screen
+          </Link>
           <Link
             to="/admin/menu"
             className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold transition hover:bg-surface-strong xl:w-auto"
@@ -336,9 +346,10 @@ function AdminDashboard() {
         </section>
       ) : null}
 
-      <section className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 xl:grid-cols-6">
+      <section className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 xl:grid-cols-7">
         {[
           ['Total orders', metrics.total],
+          ['No-login counter', metrics.counterScreen],
           ['Pending', metrics.pending],
           ['Preparing', metrics.preparing],
           ['Served', metrics.served],
@@ -364,7 +375,7 @@ function AdminDashboard() {
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search order ID, item name..."
+          placeholder="Search order ID, customer, item name..."
           className="rounded-[20px] border border-border bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary"
         />
         <select
